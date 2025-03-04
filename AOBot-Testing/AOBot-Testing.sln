@@ -1,9 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 17
-VisualStudioVersion = 17.12.35527.113 d17.12
+VisualStudioVersion = 17.12.35527.113
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AOBot-Testing", "AOBot-Testing.csproj", "{6A46B264-7F00-4CFB-9BC9-6C9214941B6A}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "UnitTests", "..\UnitTests\UnitTests.csproj", "{AC486D75-7270-4173-9786-BC78352BF237}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\Common\Common.csproj", "{896B0D36-1D64-464D-8C75-53B6BA8E5977}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +19,14 @@ Global
 		{6A46B264-7F00-4CFB-9BC9-6C9214941B6A}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{6A46B264-7F00-4CFB-9BC9-6C9214941B6A}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{6A46B264-7F00-4CFB-9BC9-6C9214941B6A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AC486D75-7270-4173-9786-BC78352BF237}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AC486D75-7270-4173-9786-BC78352BF237}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AC486D75-7270-4173-9786-BC78352BF237}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AC486D75-7270-4173-9786-BC78352BF237}.Release|Any CPU.Build.0 = Release|Any CPU
+		{896B0D36-1D64-464D-8C75-53B6BA8E5977}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{896B0D36-1D64-464D-8C75-53B6BA8E5977}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{896B0D36-1D64-464D-8C75-53B6BA8E5977}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{896B0D36-1D64-464D-8C75-53B6BA8E5977}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

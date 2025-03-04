@@ -31,7 +31,8 @@ namespace AOBot_Testing.Agents
         public CharacterINI? currentINI;
         public Emote? currentEmote;
 
-        public string currentShowname = "";
+        public string OOCShowname = "OceanyaBot";
+        public string ICShowname = "";
         public ICMessage.DeskMods deskMod = ICMessage.DeskMods.Chat;
         public ICMessage.EmoteModifiers emoteMod = ICMessage.EmoteModifiers.NoPreanimation;
         public ICMessage.ShoutModifiers shoutModifiers = ICMessage.ShoutModifiers.Nothing;
@@ -59,6 +60,11 @@ namespace AOBot_Testing.Agents
 
 
         #region Send Message Methods
+        public async Task SendICMessage(string showname, string message)
+        {
+            SetICShowname(showname);
+            SendICMessage(message);
+        }
         public async Task SendICMessage(string message)
         {
             if (ws != null && ws.State == WebSocketState.Open)
@@ -79,7 +85,7 @@ namespace AOBot_Testing.Agents
                 msg.Flip = flip;
                 msg.Realization = realization;
                 msg.TextColor = textColor;
-                msg.ShowName = currentShowname;
+                msg.ShowName = ICShowname;
                 msg.OtherCharId = -1;
                 msg.SelfOffset = SelfOffset;
                 msg.NonInterruptingPreAnim = Immediate;
@@ -96,7 +102,9 @@ namespace AOBot_Testing.Agents
 
                 await SendMessageAsync(command);
 
-                await Task.Delay((textCrawlSpeed * 3) * msg.Message.Length);
+                await Task.Delay(500); //Wait for command to process server-side
+
+                await WaitForTextScroll(message);
             }
             else
             {
@@ -105,13 +113,14 @@ namespace AOBot_Testing.Agents
         }
         public async Task SendOOCMessage(string message)
         {
-            SendOOCMessage(currentShowname, message);
+            SendOOCMessage(OOCShowname, message);
         }
-        public async Task SendOOCMessage(string username, string message)
+        public async Task SendOOCMessage(string showname, string message)
         {
             if (ws != null && ws.State == WebSocketState.Open)
             {
-                string oocMessage = $"CT#{username}#{message}#%";
+                OOCShowname = showname;
+                string oocMessage = $"CT#{showname}#{message}#%";
                 await SendMessageAsync(oocMessage);
                 await Task.Delay(500);
             }
@@ -162,9 +171,9 @@ namespace AOBot_Testing.Agents
         {
             CurrentINI = character;
         }
-        public void SetShowname(string newShowname)
+        public void SetICShowname(string newShowname)
         {
-            currentShowname = newShowname;
+            ICShowname = newShowname;
         }
         public void SetEmote(string emoteName)
         {
@@ -211,7 +220,7 @@ namespace AOBot_Testing.Agents
                     // Handle IC message
                     OnMessageReceived?.Invoke("IC", icMessage.Character, icMessage.ShowName, icMessage.Message, icMessage.CharId);
 
-                    await Task.Delay((textCrawlSpeed * 2) * icMessage.Message.Length);
+                    await WaitForTextScroll(icMessage.Message);
                 }
             }
             else if (message.StartsWith("CT#"))
@@ -277,7 +286,7 @@ namespace AOBot_Testing.Agents
                 return;
             }
 
-            if (Program.debug) Console.WriteLine("Starting handshake...");
+            if (Globals.DebugMode) Console.WriteLine("Starting handshake...");
 
             // Step 1: Send Hard Drive ID (HDID) - Can be anything unique
             hdid = Guid.NewGuid().ToString(); // Generate a unique HDID
@@ -359,9 +368,29 @@ namespace AOBot_Testing.Agents
                 await Task.Delay(10000); // Enviar un ping cada 10 segundos
             }
         }
+        public async Task Disconnect()
+        {
+            if (ws != null && ws.State == WebSocketState.Open)
+            {
+                await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnecting", CancellationToken.None);
+                ws.Dispose();
+                ws = null;
+                Console.WriteLine("Disconnected from WebSocket.");
+            }
+            else
+            {
+                Console.WriteLine("WebSocket is not connected.");
+            }
+        }
         #endregion
 
         #region Helper methods
+
+        public async Task WaitForTextScroll(string message)
+        {
+            await Task.Delay((textCrawlSpeed * 3) * message.Length);
+        }
+
         public async Task SelectFirstAvailableINIPuppet()
         {
             if (ws == null || ws.State != WebSocketState.Open)
@@ -381,7 +410,7 @@ namespace AOBot_Testing.Agents
 
                     selectedCharacterIndex = i;
                     CurrentINI = CharacterINI.FullList.FirstOrDefault(c => c.Name == characterName);
-                    currentShowname = CurrentINI?.ShowName ?? characterName;
+                    ICShowname = CurrentINI?.ShowName ?? characterName;
                     Console.WriteLine($"Selected INI Puppet: \"{characterName}\" (Server Index: {i})");
                     return;
                 }
@@ -396,7 +425,7 @@ namespace AOBot_Testing.Agents
             {
                 byte[] messageBytes = Encoding.UTF8.GetBytes(message);
                 await ws.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Text, true, CancellationToken.None);
-                if (Program.debug) Console.WriteLine($"Sent: {message}");
+                if (Globals.DebugMode) Console.WriteLine($"Sent: {message}");
             }
             else
             {
@@ -413,7 +442,7 @@ namespace AOBot_Testing.Agents
                 if (result.Count > 0)
                 {
                     string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    if (Program.debug) Console.WriteLine($"Received: {message}");
+                    if (Globals.DebugMode) Console.WriteLine($"Received: {message}");
 
                     await HandleMessage(message);
 
