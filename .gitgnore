@@ -1,0 +1,17 @@
+# Ignore Visual Studio and .vs folder
+.vs/
+*.vsidx
+
+# Ignore compiled files
+bin/
+obj/
+
+# Ignore user-specific files
+*.user
+*.suo
+*.cache
+*.log
+
+# Ignore environment settings
+.env
+appsettings.json
