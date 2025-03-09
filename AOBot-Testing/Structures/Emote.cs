@@ -8,6 +8,9 @@ namespace AOBot_Testing.Structures
         public string Animation { get; set; }
         public string Modifier { get; set; }
 
+        public string PathToImage_off { get; set; }
+        public string PathToImage_on { get; set; }
+
 
         public string sfxName { get; set; } = "1";
         public int sfxDelay { get; set; } = 0;

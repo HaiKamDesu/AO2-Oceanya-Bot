@@ -7,6 +7,7 @@ using NUnit;
 using NUnit.Framework;
 using AOBot_Testing.Structures;
 using AOBot_Testing.Agents;
+using static AOBot_Testing.Structures.ICMessage;
 
 namespace AOBot_Testing.Tests
 {
@@ -23,12 +24,29 @@ namespace AOBot_Testing.Tests
         {
             testingBot = new AOBot(Globals.IPs[Globals.Servers.ChillAndDices], "Basement/testing");
             testingBot.Connect().Wait();
+            testingBot.SetCharacter("Franziska");
 
             testingBot.OnMessageReceived += (string chatLogType, string characterName, string showName, string message, int iniPuppetID) =>
             {
-                if(!listeningForConfirmation)
+                if (!listeningForConfirmation)
                 {
                     return;
+                }
+
+                switch (chatLogType)
+                {
+                    case "IC":
+                        if (showName == testingBot.ICShowname && characterName == testingBot.currentINI.Name && iniPuppetID == testingBot.selectedCharacterIndex)
+                        {
+                            return;
+                        }
+                        break;
+                    case "OOC":
+                        if (showName == testingBot.OOCShowname)
+                        {
+                            return;
+                        }
+                        break;
                 }
 
                 receivedMessage = true;
@@ -43,7 +61,7 @@ namespace AOBot_Testing.Tests
         }
 
         [Test]
-        public async Task TestNormalMessages()
+        public async Task TestA_NormalMessages()
         {
             await testingBot.SendICMessage("Testing IC Message");
 
@@ -52,22 +70,26 @@ namespace AOBot_Testing.Tests
             await testingBot.SendOOCMessage("Testing OOC Message");
 
             await CheckUserInput();
+
+            await Task.Delay(2000);
         }
 
         [Test]
-        public async Task TestShowname()
+        public async Task TestB_Showname()
         {
             await testingBot.SendICMessage("TestShownameIC", "Testing Showname: This should be TestShownameIC");
 
             await CheckUserInput();
 
-            await testingBot.SendOOCMessage("TestShownameOOC", "Testing Showname: This should be TestShownameIC");
+            await testingBot.SendOOCMessage("TestShownameOOC", "Testing Showname: This should be TestShownameOOC");
 
             await CheckUserInput();
+
+            await Task.Delay(2000);
         }
 
         [Test]
-        public async Task TestDeskMod()
+        public async Task TestC_DeskMod()
         {
             var deskModValues = Enum.GetValues(typeof(ICMessage.DeskMods)).Cast<ICMessage.DeskMods>().ToList();
             foreach (var deskMod in deskModValues)
@@ -78,10 +100,12 @@ namespace AOBot_Testing.Tests
 
                 await CheckUserInput();
             }
+
+            await Task.Delay(2000);
         }
 
         [Test]
-        public async Task TestEmoteMod()
+        public async Task TestD_EmoteMod()
         {
             var emoteModValues = Enum.GetValues(typeof(ICMessage.EmoteModifiers)).Cast<ICMessage.EmoteModifiers>().ToList();
             foreach (var emoteMod in emoteModValues)
@@ -92,10 +116,12 @@ namespace AOBot_Testing.Tests
 
                 await CheckUserInput();
             }
+
+            await Task.Delay(2000);
         }
 
         [Test]
-        public async Task TestShoutModifiers()
+        public async Task TestE_ShoutModifiers()
         {
             var shoutModifiersValues = Enum.GetValues(typeof(ICMessage.ShoutModifiers)).Cast<ICMessage.ShoutModifiers>().ToList();
             foreach (var shoutModifier in shoutModifiersValues)
@@ -106,10 +132,12 @@ namespace AOBot_Testing.Tests
 
                 await CheckUserInput();
             }
+
+            await Task.Delay(2000);
         }
 
         [Test]
-        public async Task TestFlip()
+        public async Task TestF_Flip()
         {
             testingBot.flip = true;
             await testingBot.SendICMessage("Testing Flip: true");
@@ -120,10 +148,12 @@ namespace AOBot_Testing.Tests
             await testingBot.SendICMessage("Testing Flip: false");
 
             await CheckUserInput();
+
+            await Task.Delay(2000);
         }
 
         [Test]
-        public async Task TestRealization()
+        public async Task TestG_Realization()
         {
             testingBot.realization = true;
             await testingBot.SendICMessage("Testing Realization: true");
@@ -134,10 +164,12 @@ namespace AOBot_Testing.Tests
             await testingBot.SendICMessage("Testing Realization: false");
 
             await CheckUserInput();
+
+            await Task.Delay(2000);
         }
 
         [Test]
-        public async Task TestTextColor()
+        public async Task TestH_TextColor()
         {
             var textColorValues = Enum.GetValues(typeof(ICMessage.TextColors)).Cast<ICMessage.TextColors>().ToList();
             foreach (var textColor in textColorValues)
@@ -148,10 +180,12 @@ namespace AOBot_Testing.Tests
 
                 await CheckUserInput();
             }
+
+            await Task.Delay(2000);
         }
 
         [Test]
-        public async Task TestImmediate()
+        public async Task TestI_Immediate()
         {
             testingBot.Immediate = false;
             await testingBot.SendICMessage("Testing Immediate: false");
@@ -162,10 +196,12 @@ namespace AOBot_Testing.Tests
             await testingBot.SendICMessage("Testing Immediate: true");
 
             await CheckUserInput();
+
+            await Task.Delay(2000);
         }
 
         [Test]
-        public async Task TestAdditive()
+        public async Task TestJ_Additive()
         {
             testingBot.Additive = false;
             await testingBot.SendICMessage("Testing Additive: false");
@@ -176,6 +212,31 @@ namespace AOBot_Testing.Tests
             await testingBot.SendICMessage("Testing Additive: true");
 
             await CheckUserInput();
+
+            await Task.Delay(2000);
+        }
+
+        [Test]
+        public async Task TestK_INITesting()
+        {
+            foreach (var ini in new List<string> { "Franziska", "KamLoremaster" })
+            {
+                testingBot.SetCharacter(ini);
+
+                foreach (var kvp in testingBot.currentINI.Emotions)
+                {
+                    var emote = kvp.Value;
+
+                    testingBot.SetEmote(emote.Name);
+
+                    await testingBot.SendICMessage($"Testing Emote: {ini} - {emote.Name}");
+
+                    await CheckUserInput();
+                }
+            }
+            
+
+            await Task.Delay(2000);
         }
 
         [TearDown]

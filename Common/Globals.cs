@@ -110,6 +110,6 @@ Each of these settings has predefined integer values. **If a change is requested
 ";
 
         public static bool UseOpenAIAPI = false;
-        public static bool DebugMode = false;
+        public static bool DebugMode = true;
     }
 

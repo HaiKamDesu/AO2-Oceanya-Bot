@@ -1,0 +1,45 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <UseWPF>true</UseWPF>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="courtroombackground.png" />
+    <None Remove="Resources\Buttons\Hold It_Selected.png" />
+    <None Remove="Resources\Buttons\Objection_Selected.png" />
+    <None Remove="Resources\Buttons\Take That_Selected.png" />
+    <None Remove="Resources\Custom.png" />
+    <None Remove="Resources\Hold It.png" />
+    <None Remove="Resources\LogBG.png" />
+    <None Remove="Resources\Objection.png" />
+    <None Remove="Resources\ObjectionButtonsBG.png" />
+    <None Remove="Resources\Take That.png" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <PackageReference Include="MaterialDesignColors" Version="5.2.1" />
+    <PackageReference Include="MaterialDesignThemes" Version="5.2.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\AOBot-Testing\AO2.csproj" />
+    <ProjectReference Include="..\Common\Common.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+	<Resource Include="Resources\**\*.*" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Update="Components\OOCLog.xaml.cs">
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+
+</Project>

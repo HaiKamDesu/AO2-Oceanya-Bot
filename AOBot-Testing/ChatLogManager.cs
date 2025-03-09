@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using AOBot_Testing.Agents;
+using Common;
 
 /// <summary>
 /// 
@@ -26,7 +27,7 @@ public class ChatLogManager(int MaxChatHistory)
             _chatHistory.RemoveAt(0); // Remove oldest message when limit is exceeded
         }
 
-        Console.WriteLine(formattedMessage);
+        CustomConsole.WriteLine(formattedMessage);
     }
 
     /// <summary>

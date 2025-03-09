@@ -1,4 +1,5 @@
-﻿
+﻿using Common;
+
 namespace AOBot_Testing.Structures
 {
     public class ICMessage
@@ -76,7 +77,9 @@ namespace AOBot_Testing.Structures
             Orange = 3, // orange
             Blue = 4, // blue (disables talking animation)
             Yellow = 5, // yellow
-            Rainbow = 6 // rainbow (removed in 2.8)
+            Magenta = 6, // previously rainbow (removed in 2.8)
+            Cyan = 7,
+            Gray = 8,
         }
         #endregion
 
@@ -120,14 +123,14 @@ namespace AOBot_Testing.Structures
         {
             if (!message.StartsWith("MS#"))
             {
-                Console.WriteLine("❌ Invalid IC message format.");
+                CustomConsole.WriteLine("❌ Invalid IC message format.");
                 return null;
             }
 
             string[] parts = message.Split('#');
             if (parts.Length < 31) // Ensure the message has all expected fields
             {
-                Console.WriteLine("⚠️ Incomplete IC message received.");
+                CustomConsole.WriteLine("⚠️ Incomplete IC message received.");
                 return null;
             }
 
@@ -185,7 +188,7 @@ namespace AOBot_Testing.Structures
             }
             catch (Exception ex)
             {
-                Console.WriteLine($"❌ Error parsing IC message: {ex.Message}");
+                CustomConsole.WriteLine($"❌ Error parsing IC message: {ex.Message}");
                 return null;
             }
         }

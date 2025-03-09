@@ -1,0 +1,105 @@
+﻿<UserControl x:Class="OceanyaClient.Components.ImageComboBox"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             xmlns:local="clr-namespace:OceanyaClient.Components"
+             xmlns:converters="clr-namespace:OceanyaClient.Converters"
+             mc:Ignorable="d" Height="21" Width="195">
+
+    <Grid>
+        <ComboBox x:Name="cboINISelect"
+                  IsEditable="True"
+                  TextSearch.TextPath="Name"
+                  StaysOpenOnEdit="True"
+                  IsTextSearchEnabled="False"
+                  KeyDown="cboINISelect_KeyUp"
+                  SelectionChanged="cboINISelect_SelectionChanged"
+                  PreviewKeyDown="cboINISelect_PreviewKeyDown"
+                  LostFocus="cboINISelect_LostFocus"
+                  BorderBrush="Black"
+                  VerticalContentAlignment="Center"
+                  Background="DarkGray">
+
+            <!-- Move the Converter here so it's available inside the Template -->
+            <ComboBox.Resources>
+                <converters:NullToVisibilityConverter x:Key="NullToVisibilityConverter"/>
+            </ComboBox.Resources>
+
+            <!-- Custom ComboBox Template -->
+            <ComboBox.Template>
+                <ControlTemplate TargetType="ComboBox">
+                    <Grid>
+                        <!-- Border around ComboBox -->
+                        <Border x:Name="Border"
+                                CornerRadius="3"
+                                Background="{TemplateBinding Background}"
+                                BorderBrush="{TemplateBinding BorderBrush}"
+                                BorderThickness="1">
+
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="Auto" MinWidth="0"/>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto"/>
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Selected Item Image (Hidden when no image) -->
+                                <Image Source="{Binding SelectedItem.ImagePath, RelativeSource={RelativeSource AncestorType=ComboBox}}"
+                                       Width="14" Height="14" Margin="3"
+                                       Visibility="{Binding SelectedItem.ImagePath, Converter={StaticResource NullToVisibilityConverter}}"
+                                       Stretch="UniformToFill"
+                                       Grid.Column="0"/>
+
+                                <!-- Editable TextBox inside ComboBox -->
+                                <TextBox x:Name="PART_EditableTextBox"
+                                         Grid.Column="{Binding SelectedItem.ImagePath, Converter={StaticResource NullToVisibilityConverter}, ConverterParameter=ColumnShift}"
+                                         Background="{TemplateBinding Background}" 
+                                         Foreground="Black"
+                                         BorderThickness="0"
+                                         VerticalContentAlignment="Center"/>
+
+                                <!-- Dropdown Button -->
+                                <ToggleButton Grid.Column="2"
+                                              Width="20"
+                                              BorderBrush="#FF7D7D7D"
+                                              ClickMode="Press"
+                                              Background="DarkGray"
+                                              IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+                                    <Path Width="10" Height="6"
+                                          Fill="Black"
+                                          Data="M 0 0 L 10 0 L 5 6 Z"
+                                          VerticalAlignment="Center"
+                                          HorizontalAlignment="Center"/>
+                                </ToggleButton>
+                            </Grid>
+                        </Border>
+
+                        <!-- Dropdown Popup (Matches ComboBox Width) -->
+                        <Popup x:Name="Popup"
+                               Placement="Bottom"
+                               IsOpen="{Binding IsDropDownOpen, RelativeSource={RelativeSource TemplatedParent}}"
+                               StaysOpen="False">
+                            <Border Background="White" BorderBrush="Black" BorderThickness="1"
+                                    Width="{Binding ActualWidth, ElementName=cboINISelect}">
+                                <ScrollViewer MaxHeight="150">
+                                    <ItemsPresenter/>
+                                </ScrollViewer>
+                            </Border>
+                        </Popup>
+                    </Grid>
+                </ControlTemplate>
+            </ComboBox.Template>
+
+            <!-- Item Template -->
+            <ComboBox.ItemTemplate>
+                <DataTemplate>
+                    <StackPanel Orientation="Horizontal">
+                        <Image Source="{Binding ImagePath}" Width="20" Height="20" Margin="5"/>
+                        <TextBlock Text="{Binding Name}" VerticalAlignment="Center"/>
+                    </StackPanel>
+                </DataTemplate>
+            </ComboBox.ItemTemplate>
+        </ComboBox>
+    </Grid>
+</UserControl>

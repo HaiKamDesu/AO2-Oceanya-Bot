@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using Common;
 
 namespace AOBot_Testing.Structures
 {
@@ -18,7 +19,7 @@ namespace AOBot_Testing.Structures
                     if (File.Exists(cacheFile))
                     {
                         characterConfigs = LoadFromJson(cacheFile);
-                        Console.WriteLine($"Loaded {characterConfigs.Count} characters from cache.");
+                        CustomConsole.WriteLine($"Loaded {characterConfigs.Count} characters from cache.");
                     }
                     else
                     {
@@ -41,14 +42,14 @@ namespace AOBot_Testing.Structures
                 if (File.Exists(iniFilePath))
                 {
                     var config = CharacterINI.Parse(iniFilePath);
-                    Console.WriteLine("Parsed Character: " + config.Name);
+                    CustomConsole.WriteLine("Parsed Character: " + config.Name);
                     characterConfigs.Add(config);
                 }
             }
 
             // Save to JSON file for fast future loading
             SaveToJson(cacheFile, characterConfigs);
-            Console.WriteLine("Character list saved to cache.");
+            CustomConsole.WriteLine("Character list saved to cache.");
         }
         // **Save all characters to a single JSON file**
         static void SaveToJson(string filePath, List<CharacterINI> characters)
@@ -73,7 +74,7 @@ namespace AOBot_Testing.Structures
         public int PreAnimationTime { get; set; }
         public int EmotionsCount { get; set; }
         public Dictionary<int, Emote> Emotions { get; set; } = new();
-
+        public string CharIconPath { get; set; }
         public static CharacterINI Parse(string filePath)
         {
             var config = new CharacterINI();
@@ -141,6 +142,51 @@ namespace AOBot_Testing.Structures
             }
             config.Name = Path.GetFileName(Path.GetDirectoryName(filePath));
             config.PathToIni = filePath;
+            string baseCharacterPath = Path.GetDirectoryName(filePath);
+
+            var extensions = new List<string> { "png", "jpg", "webp", "gif", "pdn" };
+            foreach (var extension in extensions)
+            {
+                string curPath = Path.Combine(baseCharacterPath, "char_icon." + extension);
+                if (File.Exists(curPath)) 
+                {
+                    config.CharIconPath = curPath;
+                }
+            }
+
+            if (string.IsNullOrEmpty(config.CharIconPath))
+            {
+                config.CharIconPath = Path.Combine(baseCharacterPath, "char_icon.png");
+            }
+
+            #region Gather Buttons
+            string buttonPath = Path.Combine(baseCharacterPath, "Emotions");
+
+            if (Directory.Exists(buttonPath))
+            {
+
+            }
+            foreach (var item in config.Emotions)
+            {
+                int id = item.Key;
+
+                foreach (var extension in extensions)
+                {
+                    string currentButtonPath_off = Path.Combine(buttonPath, $"button{id}_off."+extension);
+                    if (File.Exists(currentButtonPath_off) && string.IsNullOrEmpty(item.Value.PathToImage_off))
+                    {
+                        item.Value.PathToImage_off = currentButtonPath_off;
+                    }
+
+                    string currentButtonPath_on = Path.Combine(buttonPath, $"button{id}_on." + extension);
+                    if (File.Exists(currentButtonPath_on) && string.IsNullOrEmpty(item.Value.PathToImage_on))
+                    {
+                        item.Value.PathToImage_on = currentButtonPath_on;
+                    }
+                }
+            }
+            #endregion
+
             return config;
         }
     }

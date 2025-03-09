@@ -2,7 +2,9 @@
 
 	<PropertyGroup>
 		<TargetFramework>net8.0</TargetFramework>
-		<IsPackable>false</IsPackable>
+		<RootNamespace>UnitTests</RootNamespace>
+		<ImplicitUsings>enable</ImplicitUsings>
+		<Nullable>enable</Nullable>
 		<IsTestProject>true</IsTestProject>
 	</PropertyGroup>
 
@@ -13,7 +15,7 @@
 	</ItemGroup>
 
 	<ItemGroup>
-	  <ProjectReference Include="..\AOBot-Testing\AOBot-Testing.csproj" />
+	  <ProjectReference Include="..\AOBot-Testing\AO2.csproj" />
 	</ItemGroup>
 
 </Project>
