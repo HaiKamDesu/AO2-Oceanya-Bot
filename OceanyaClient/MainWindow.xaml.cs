@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -29,15 +30,9 @@ namespace OceanyaClient
             // Set grid mode and size
             EmoteGrid.SetScrollMode(PageButtonGrid.ScrollMode.Vertical);
             EmoteGrid.SetPageSize(4, 1);
-
-
-            //ICLogControl.AddMessage("TestingShowname", "a", true);
-            //OOCLogControl.AddMessage("TestingShowname", "a", true);
-            //for (int i = 0; i < 5; i++)
-            //{
-            //    ICLogControl.AddMessage("TestingShowname", "TestingMessage"+i);
-            //    OOCLogControl.AddMessage("TestingShowname", "TestingMessage" + i);
-            //}
+            OOCLogControl.IsEnabled = false;
+            ICLogControl.IsEnabled = false;
+            ICMessageSettingsControl.IsEnabled = false;
 
             OOCLogControl.OnSendOOCMessage += async (showName, message) =>
             {
@@ -74,8 +69,136 @@ namespace OceanyaClient
                     client = currentClient;
                 }
 
-                await client.SendICMessage(sendMessage);
+                
+                await client.SendICMessage(sendMessage.Trim());
             };
+
+            OpenConfigurationWindow();
+
+            //ICLogControl.AddMessage("TestingShowname", "a", true);
+            //OOCLogControl.AddMessage("TestingShowname", "a", true);
+            //for (int i = 0; i < 5; i++)
+            //{
+            //    ICLogControl.AddMessage("TestingShowname", "TestingMessage"+i);
+            //    OOCLogControl.AddMessage("TestingShowname", "TestingMessage" + i);
+            //}
+
+
+        }
+
+        private void OpenConfigurationWindow()
+        {
+            Window configWindow = new Window
+            {
+                Width = 450,
+                Height = 250,
+                WindowStartupLocation = WindowStartupLocation.CenterScreen,
+                Title = "Configuration",
+                ResizeMode = ResizeMode.NoResize
+            };
+
+            StackPanel panel = new StackPanel { Margin = new Thickness(10) };
+
+            // Attorney_Online.exe path
+            TextBlock exePathLabel = new TextBlock { Text = "Attorney_Online.exe Path:", Margin = new Thickness(0, 0, 0, 5) };
+            TextBox exePathTextBox = new TextBox { MinWidth = 300 };
+            Button browseButton = new Button { Content = "Browse", Width = 75, Margin = new Thickness(5, 0, 0, 0) };
+            browseButton.Click += (s, e) =>
+            {
+                Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
+                {
+                    Filter = "Executable files (*.exe)|*.exe",
+                    Title = "Select Attorney_Online.exe"
+                };
+                if (openFileDialog.ShowDialog() == true)
+                {
+                    exePathTextBox.Text = openFileDialog.FileName;
+                }
+            };
+
+            StackPanel exePathPanel = new StackPanel { Orientation = Orientation.Horizontal };
+            exePathPanel.Children.Add(exePathTextBox);
+            exePathPanel.Children.Add(browseButton);
+
+            // Connection path
+            TextBlock connectionPathLabel = new TextBlock { Text = "Connection Path (e.g., Basement/testing):", Margin = new Thickness(0, 10, 0, 5) };
+            TextBox connectionPathTextBox = new TextBox { MinWidth = 300 };
+
+            // Refresh character and background info checkbox
+            CheckBox refreshInfoCheckBox = new CheckBox { Content = "Refresh character and background info", Margin = new Thickness(0, 10, 0, 0) };
+
+            // Load saved configuration
+            LoadConfiguration(exePathTextBox, connectionPathTextBox);
+
+            // OK button
+            Button okButton = new Button { Content = "OK", Width = 75, Margin = new Thickness(0, 10, 0, 0), IsDefault = true };
+            okButton.Click += (s, e) =>
+            {
+                // Save the configuration
+                string exePath = exePathTextBox.Text;
+                string connectionPath = connectionPathTextBox.Text;
+
+                // Validate inputs
+                if (string.IsNullOrWhiteSpace(exePath) || string.IsNullOrWhiteSpace(connectionPath))
+                {
+                    MessageBox.Show("Please provide both the Attorney_Online.exe path and the connection path.", "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                // Save to settings or use as needed
+                Globals.BaseFolder = Path.Combine(Path.GetDirectoryName(exePath), "base");
+                Globals.ConnectionString = connectionPath;
+
+                // Save configuration to file
+                SaveConfiguration(exePath, connectionPath);
+
+                // Refresh character and background info if checkbox is checked
+                if (refreshInfoCheckBox.IsChecked == true)
+                {
+                    WaitForm.ShowForm("Refreshing character and background info...", configWindow);
+                    CharacterINI.RefreshCharacterList();
+                    WaitForm.CloseForm();
+                }
+
+                configWindow.Close();
+            };
+
+            panel.Children.Add(exePathLabel);
+            panel.Children.Add(exePathPanel);
+            panel.Children.Add(connectionPathLabel);
+            panel.Children.Add(connectionPathTextBox);
+            panel.Children.Add(refreshInfoCheckBox);
+            panel.Children.Add(okButton);
+
+            configWindow.Content = panel;
+            configWindow.ShowDialog();
+        }
+
+        private void SaveConfiguration(string exePath, string connectionPath)
+        {
+            var config = new { ExePath = exePath, ConnectionPath = connectionPath };
+            string json = JsonSerializer.Serialize(config);
+            string configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OceanyaClient", "config.json");
+
+            Directory.CreateDirectory(Path.GetDirectoryName(configFilePath));
+            File.WriteAllText(configFilePath, json);
+        }
+
+        private void LoadConfiguration(TextBox exePathTextBox, TextBox connectionPathTextBox)
+        {
+            string configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OceanyaClient", "config.json");
+
+            if (File.Exists(configFilePath))
+            {
+                string json = File.ReadAllText(configFilePath);
+                var config = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
+
+                if (config != null)
+                {
+                    exePathTextBox.Text = config["ExePath"];
+                    connectionPathTextBox.Text = config["ConnectionPath"];
+                }
+            }
         }
 
         private void AddClient(string clientName)
@@ -85,22 +208,18 @@ namespace OceanyaClient
         private async Task AddClientAsync(string clientName)
         {
             IsEnabled = false;
-            // Show the loading window with fade-in effect
-            LoadingWindow loadingWindow = new LoadingWindow
-            {
-                Opacity = 0, // Start fully transparent
-                WindowStartupLocation = WindowStartupLocation.CenterOwner,
-            };
-
-            loadingWindow.Show(); // Show it FIRST before setting Owner
-            loadingWindow.Activate();
+            WaitForm.ShowForm("Connecting client...", this);
 
             try
             {
-                AOBot bot = new AOBot(Globals.IPs[Globals.Servers.ChillAndDices], "Basement/testing");
+                AOBot bot = new AOBot(Globals.IPs[Globals.Servers.ChillAndDices], Globals.ConnectionString);
                 bot.clientName = clientName;
                 if (clients.Count == 0)
                 {
+                    OOCLogControl.IsEnabled = true;
+                    ICLogControl.IsEnabled = true;
+                    ICMessageSettingsControl.IsEnabled = true;
+
                     bot.OnICMessageReceived += (ICMessage icMessage) =>
                     {
                         Dispatcher.Invoke(() =>
@@ -133,6 +252,7 @@ namespace OceanyaClient
                 };
 
                 toggleBtn.Checked += ClientToggleButton_Checked;
+                toggleBtn.Unchecked += ClientToggleButton_Unchecked;
 
                 // Subscribe to OnChangedCharacter event
                 bot.OnChangedCharacter += (CharacterINI newCharacter) =>
@@ -230,10 +350,6 @@ namespace OceanyaClient
                     });
                 };
 
-
-
-
-
                 bot.SetCharacter(bot.currentINI);
 
                 clients.Add(toggleBtn, bot);
@@ -249,10 +365,7 @@ namespace OceanyaClient
             }
             finally
             {
-                // Fade out and close the loading window
-                DoubleAnimation fadeOutAnimation = new DoubleAnimation(1, 0, TimeSpan.FromSeconds(0.5));
-                fadeOutAnimation.Completed += (s, e) => loadingWindow.Close();
-                loadingWindow.BeginAnimation(Window.OpacityProperty, fadeOutAnimation);
+                WaitForm.CloseForm();
             }
 
             IsEnabled = true;
@@ -289,10 +402,10 @@ namespace OceanyaClient
             GPTClient gptClient = new GPTClient(apiKey);
             gptClient.SetSystemInstructions(new List<string> { Globals.AI_SYSTEM_PROMPT });
             gptClient.systemVariables = new Dictionary<string, string>()
-        {
-            { "[[[current_character]]]", bot.currentINI.Name },
-            { "[[[current_emote]]]", bot.currentEmote.Name }
-        };
+            {
+                { "[[[current_character]]]", bot.currentINI.Name },
+                { "[[[current_emote]]]", bot.currentEmote.DisplayID }
+            };
             #endregion
 
             ChatLogManager chatLog = new ChatLogManager(MaxChatHistory: 20);
@@ -432,13 +545,13 @@ namespace OceanyaClient
                             return success;
                         }
 
-                        if (modifiers.ContainsKey("realization") && modifiers["realization"].TryGetInt32(out int realizationValue))
-                            bot.realization = realizationValue == 1;
-                        else
-                        {
-                            CustomConsole.WriteLine("ERROR: Invalid realization value. Retrying...");
-                            return success;
-                        }
+                        //if (modifiers.ContainsKey("realization") && modifiers["realization"].TryGetInt32(out int realizationValue))
+                        //    bot.effect = realizationValue == 1;
+                        //else
+                        //{
+                        //    CustomConsole.WriteLine("ERROR: Invalid realization value. Retrying...");
+                        //    return success;
+                        //}
 
                         if (modifiers.ContainsKey("textColor") && modifiers["textColor"].TryGetInt32(out int textColorValue))
                             bot.textColor = (ICMessage.TextColors)textColorValue;
@@ -566,14 +679,23 @@ namespace OceanyaClient
             {
                 if (button != clickedButton)
                 {
+                    button.Unchecked -= ClientToggleButton_Unchecked;
                     button.IsChecked = false;
+                    button.Unchecked += ClientToggleButton_Unchecked;
                 }
             }
 
             SelectClient(clients[clickedButton]);
-
         }
-         
+        private void ClientToggleButton_Unchecked(object sender, RoutedEventArgs e)
+        {
+            ToggleButton clickedButton = sender as ToggleButton;
+
+            if (clickedButton.IsChecked == false)
+            {
+                clickedButton.IsChecked = true;
+            }
+        }
         private void ToggleButton_Checked(object sender, RoutedEventArgs e)
         {
             ToggleButton clickedButton = sender as ToggleButton;

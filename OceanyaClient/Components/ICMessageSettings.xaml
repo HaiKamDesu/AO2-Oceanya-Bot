@@ -7,6 +7,12 @@
              xmlns:components="clr-namespace:OceanyaClient.Components"
              mc:Ignorable="d" Height="520" Width="528" Background="#FF585858">
     <Canvas>
+        <Rectangle Height="115" Canvas.Top="22" Width="452" Fill="#FF464646" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="29">
+            <Rectangle.OpacityMask>
+                <ImageBrush ImageSource="/Resources/OceanyaFullLogo.png" Stretch="UniformToFill"/>
+            </Rectangle.OpacityMask>
+        </Rectangle>
+        <Rectangle x:Name="bgSettings" Height="153" Canvas.Top="137" Width="505" Fill="#FF4E5056" HorizontalAlignment="Center" VerticalAlignment="Top"/>
         <Grid x:Name="Showname" Canvas.Top="0" Canvas.Left="0" Width="78" Height="17">
             <!-- Actual TextBox -->
             <TextBox x:Name="txtICShowname" TextWrapping="Wrap"
@@ -49,11 +55,15 @@
         </Grid>
 
         <components:PageButtonGrid x:Name="EmoteGrid" Canvas.Top="17" BorderBrush="#FF545454" BorderThickness="1,1,1,1" Width="505" Height="120" HorizontalAlignment="Center" VerticalAlignment="Top"/>
-        <CheckBox x:Name="chkPreanim" Content="Preanim" Canvas.Top="170" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="58" Height="16" BorderBrush="Black" Checked="chkPreanim_Checked" Unchecked="chkPreanim_Checked"/>
-        <CheckBox x:Name="chkFlip" Content="Flip" Canvas.Top="170" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="37" Height="16" BorderBrush="Black" Checked="chkFlip_Checked" Unchecked="chkFlip_Checked" Canvas.Left="63"/>
-        <CheckBox x:Name="chkAdditive" Content="Additive" Canvas.Top="170" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="56" Height="16" BorderBrush="Black" Checked="chkAdditive_Checked" Unchecked="chkAdditive_Checked" Canvas.Left="105"/>
-        <CheckBox x:Name="chkImmediate" Content="Immediate" Canvas.Top="170" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="73" Height="16" BorderBrush="Black" Checked="chkImmediate_Checked" Unchecked="chkImmediate_Checked" Canvas.Left="166"/>
+        <CheckBox x:Name="chkPreanim" Content="Preanim" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="58" Height="16" BorderBrush="Black" Checked="chkPreanim_Checked" Unchecked="chkPreanim_Checked"/>
+        <CheckBox x:Name="chkFlip" Content="Flip" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="37" Height="16" BorderBrush="Black" Checked="chkFlip_Checked" Unchecked="chkFlip_Checked" Canvas.Left="63"/>
+        <CheckBox x:Name="chkAdditive" Content="Additive" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="56" Height="16" BorderBrush="Black" Checked="chkAdditive_Checked" Unchecked="chkAdditive_Checked" Canvas.Left="105"/>
+        <CheckBox x:Name="chkImmediate" Content="Immediate" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="73" Height="16" BorderBrush="Black" Checked="chkImmediate_Checked" Unchecked="chkImmediate_Checked" Canvas.Left="166"/>
         <components:ImageComboBox x:Name="CharacterDropdown" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Top="142" Width="156"/>
-        <components:ImageComboBox x:Name="PositionDropdown" Canvas.Top="142" Width="78" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="161"/>
+        <components:ImageComboBox x:Name="EmoteDropdown" Canvas.Top="142" Width="156" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="161"/>
+        <components:ImageComboBox x:Name="PositionDropdown" Canvas.Top="142" Width="156" Canvas.Left="322" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+        <components:ImageComboBox x:Name="TextColorDropdown" Canvas.Top="168" Width="156" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+        <components:ImageComboBox x:Name="EffectDropdown" Canvas.Top="168" Width="156" Canvas.Left="161" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+        <components:ImageComboBox x:Name="sfxDropdown" Canvas.Top="168" Width="156" Canvas.Left="322" HorizontalAlignment="Left" VerticalAlignment="Center"/>
     </Canvas>
 </UserControl>

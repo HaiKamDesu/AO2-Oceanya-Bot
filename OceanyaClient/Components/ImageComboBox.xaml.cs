@@ -1,9 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Collections.ObjectModel;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media.Imaging;
 
 namespace OceanyaClient.Components
 {
@@ -14,12 +16,14 @@ namespace OceanyaClient.Components
             public string Name { get; set; }
             public string ImagePath { get; set; }
         }
+        private const int MaxVisibleItems = 20000; // Show only 20 at a time
 
-        private List<DropdownItem> allItems;
+        private ObservableCollection<DropdownItem> allItems = new();
         private bool isManuallySelecting = false;
         private TextBox editableTextBox; // The ComboBox's editable TextBox
         private bool enableAutoComplete = true; // Default to true
         public event EventHandler<string> OnConfirm;
+        private bool isReadOnly = false;
         public bool EnableAutoComplete
         {
             get => enableAutoComplete;
@@ -41,25 +45,40 @@ namespace OceanyaClient.Components
             cboINISelect.Loaded += (s, e) =>
             {
                 editableTextBox = cboINISelect.Template.FindName("PART_EditableTextBox", cboINISelect) as TextBox;
+                if (editableTextBox != null)
+                {
+                    editableTextBox.IsReadOnly = isReadOnly;
+                    editableTextBox.TextChanged += cboINISelect_TextChanged;
+                }
             };
         }
 
-        public void AddDropdownItem(string name, string imagePath)
-        {
-            if (allItems == null)
-            {
-                allItems = new List<DropdownItem>();
-            }
 
-            allItems.Add(new DropdownItem { Name = name, ImagePath = imagePath });
-            cboINISelect.ItemsSource = null; // Reset the ItemsSource to refresh the ComboBox
-            cboINISelect.ItemsSource = allItems;
+        private void FilterDropdown(string input)
+        {
+            var filteredItems = allItems
+                .Where(item => item.Name.StartsWith(input, StringComparison.OrdinalIgnoreCase))
+                .Take(MaxVisibleItems)
+                .ToList();
+
+            cboINISelect.ItemsSource = filteredItems;
+            cboINISelect.IsDropDownOpen = filteredItems.Count > 0;
         }
 
 
-        string realInput = "";
-        private void cboINISelect_KeyUp(object sender, KeyEventArgs e)
+        public void Add(string name, string imagePath)
         {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                allItems.Add(new DropdownItem { Name = name, ImagePath = imagePath });
+            });
+        }
+
+
+
+        string userTypedInput = "";
+        private void cboINISelect_KeyDown(object sender, KeyEventArgs e)
+       {
             if (e.Key == Key.Enter)
             {
                 e.Handled = true;
@@ -84,59 +103,44 @@ namespace OceanyaClient.Components
                 isManuallySelecting = false;
                 cboINISelect.IsDropDownOpen = false;
 
-                ConfirmSelection(); //Fire an event when Enter is pressed
+                ConfirmSelection(cboINISelect.Text); //Fire an event when Enter is pressed
             }
-            else if (e.Key == Key.Back)
-            {
-                EnableAutoComplete = false; // Disable autocomplete after Backspace
-            }
-            else if (!(char.IsLetter((char)KeyInterop.VirtualKeyFromKey(e.Key)) || e.Key == Key.Space))
-            {
-                return;
-            }
-            else if (!EnableAutoComplete)
-            {
-                EnableAutoComplete = true; // Enable autocomplete when typing a normal key
-            }
+        }
+
+        private CancellationTokenSource debounceToken;
+
+        private void cboINISelect_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            userTypedInput = editableTextBox.Text.Substring(0, editableTextBox.SelectionStart);
+
+            FilterDropdown(userTypedInput);
+
+            EnableAutoComplete = true; 
 
             if (editableTextBox == null) return;
 
-            realInput = editableTextBox.Text.Substring(0, editableTextBox.SelectionStart);
-
             if (isManuallySelecting || !EnableAutoComplete) return;
 
-            string input = editableTextBox.Text;
-            if (string.IsNullOrWhiteSpace(input))
-            {
-                cboINISelect.ItemsSource = allItems;
-                cboINISelect.IsDropDownOpen = false;
-                return;
-            }
 
-            var match = allItems.FirstOrDefault(item => item.Name.StartsWith(input, StringComparison.OrdinalIgnoreCase));
+            var match = allItems.FirstOrDefault(item => item.Name.StartsWith(userTypedInput, StringComparison.OrdinalIgnoreCase));
             if (match != null)
             {
-                cboINISelect.ItemsSource = allItems.Where(item => item.Name.StartsWith(input, StringComparison.OrdinalIgnoreCase)).ToList();
-                cboINISelect.IsDropDownOpen = true;
-
-                if (match.Name.ToLower() != realInput.ToLower())
+                if (match.Name.ToLower() != userTypedInput.ToLower())
                 {
-                    if (match.Name.Length >= input.Length)
+                    if (match.Name.Length >= userTypedInput.Length && !string.IsNullOrEmpty(userTypedInput))
                     {
+                        editableTextBox.TextChanged -= cboINISelect_TextChanged;
                         editableTextBox.Text = match.Name;
-                        editableTextBox.SelectionStart = input.Length;
-                        editableTextBox.SelectionLength = match.Name.Length - input.Length;
+                        editableTextBox.TextChanged += cboINISelect_TextChanged;
+                        editableTextBox.SelectionStart = userTypedInput.Length;
+                        editableTextBox.SelectionLength = match.Name.Length - userTypedInput.Length;
                     }
                 }
-                else if(match.Name.Length == 1)
+                else if (match.Name.Length == 1)
                 {
                     editableTextBox.SelectionStart = editableTextBox.Text.Length;
                     editableTextBox.SelectionLength = 0;
                 }
-            }
-            else
-            {
-                cboINISelect.IsDropDownOpen = false;
             }
 
             // Ensure the TextBox remains focused
@@ -146,9 +150,27 @@ namespace OceanyaClient.Components
 
 
 
-
         private void cboINISelect_PreviewKeyDown(object sender, KeyEventArgs e)
         {
+            if (e.Key == Key.Back)
+            {
+                EnableAutoComplete = false; // Disable autocomplete after Backspace
+
+                // Check if the selection crosses the user-typed input
+                if (editableTextBox.SelectionStart < userTypedInput.Length)
+                {
+                    string newText = userTypedInput.Substring(0, editableTextBox.SelectionStart);
+                    editableTextBox.Text = newText;
+                }
+                else
+                {
+                    // Otherwise, handle backspace normally
+                    editableTextBox.Text = userTypedInput;
+                }
+
+                editableTextBox.SelectionStart = editableTextBox.Text.Length;
+                editableTextBox.SelectionLength = 0;
+            }
         }
 
 
@@ -159,35 +181,93 @@ namespace OceanyaClient.Components
             cboINISelect.IsDropDownOpen = false;
 
             if (cboINISelect.Text == "") return;
-            
-            ConfirmSelection(); // Fire event when focus is lost
         }
 
 
         public string SelectedText
         {
             get => cboINISelect.Text;
-            set => cboINISelect.Text = value;
+            set 
+            {
+                cboINISelect.Text = value;
+                ConfirmSelection(cboINISelect.Text);
+            }
         }
 
-        public void SetItemsSource(List<DropdownItem> items)
+        private void ConfirmSelection(string text)
         {
-            allItems = items;
-            cboINISelect.ItemsSource = allItems;
+            cboINISelect.IsDropDownOpen = false;
+            editableTextBox.SelectionStart = editableTextBox.Text.Length;
+            editableTextBox.SelectionLength = 0;
+
+            var selectedItem = allItems.FirstOrDefault(item => item.Name == text);
+            if (selectedItem != null)
+            {
+                SetSelectedItemImage(selectedItem.ImagePath);
+            }
+            else
+            {
+                SetSelectedItemImage("");
+            }
+
+                cboINISelect.Dispatcher.BeginInvoke(new Action(() =>
+                {
+                    Keyboard.ClearFocus();
+                }), System.Windows.Threading.DispatcherPriority.Background);
+
+            OnConfirm?.Invoke(this, text); // Fire event with selected text
         }
 
-        private void ConfirmSelection()
-        {
-            OnConfirm?.Invoke(this, cboINISelect.Text); // Fire event with selected text
-        }
 
         private void cboINISelect_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (cboINISelect.SelectedItem != null)
+            if (e.AddedItems.Count > 0)
             {
-                ConfirmSelection(); // Fire event when dropdown item is selected
+                var item = (DropdownItem)e.AddedItems[0];
+                ConfirmSelection(item.Name); // Fire event when dropdown item is selected
             }
         }
+
+        public void Clear()
+        {
+            Application.Current.Dispatcher.Invoke(() =>
+            {
+                allItems.Clear();
+                cboINISelect.ItemsSource = null;
+                cboINISelect.Text = string.Empty;
+            });
+        }
+
+        public void SetComboBoxReadOnly(bool isReadOnly)
+        {
+            this.isReadOnly = isReadOnly;
+        }
+
+        public void SetSelectedItemImage(string imagePath)
+        {
+            if (cboINISelect.Template.FindName("imgSelected", cboINISelect) is Image imgSelected)
+            {
+                try
+                {
+                    Uri imageUri;
+                    if (imagePath.StartsWith("pack://application:,,,"))
+                    {
+                        imageUri = new Uri(imagePath, UriKind.Absolute);
+                    }
+                    else
+                    {
+                        imageUri = new Uri(imagePath, UriKind.RelativeOrAbsolute);
+                    }
+
+                    imgSelected.Source = new BitmapImage(imageUri);
+                }
+                catch (Exception)
+                {
+                    imgSelected.Source = null; // Set to no image if there's an error
+                }
+            }
+        }
+
 
     }
 }

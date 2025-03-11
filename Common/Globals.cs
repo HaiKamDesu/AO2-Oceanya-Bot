@@ -2,19 +2,24 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Tasks;
 
     public static class Globals
     {
+        public static string BaseFolder = "D:\\Programs\\Attorney Online\\base";
+        public static string ConnectionString = "Basement/testing";
         public enum Servers { ChillAndDices, Vanilla, CaseCafe }
-        public static Dictionary<Servers, string> IPs = new Dictionary<Servers, string>()
-        {
-            { Servers.ChillAndDices, "ws://82.165.1.79:50001"},
-            { Servers.Vanilla, "ws://[2606:4700:3030::6815:5001]:2095"},
-            { Servers.CaseCafe, "ws://51.81.186.2:27014"}
-        };
+        public static Dictionary<Servers, string> IPs = LoadServerIPs();
 
-        public static string AI_SYSTEM_PROMPT = @"
+        private static Dictionary<Servers, string> LoadServerIPs()
+        {
+            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "server.json");
+            var json = File.ReadAllText(filePath);
+            return JsonSerializer.Deserialize<Dictionary<Servers, string>>(json);
+        }
+
+    public static string AI_SYSTEM_PROMPT = @"
 You are an Attorney Online (AO2) player who interacts with others based on the chatlog. 
 You decide **when to respond and when to remain silent**. If you do not wish to respond, output only: `SYSTEM_WAIT()` disregarding any and all json formats.
 

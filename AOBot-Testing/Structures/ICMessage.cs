@@ -1,4 +1,5 @@
 ﻿using Common;
+using System.Drawing;
 
 namespace AOBot_Testing.Structures
 {
@@ -33,7 +34,56 @@ namespace AOBot_Testing.Structures
         public string FramesRealization { get; set; }
         public string FramesSfx { get; set; }
         public bool Additive { get; set; }
-        public string Effect { get; set; }
+        public Effects Effect { get; set; }
+        public string EffectString
+        {
+            get
+            {
+                string effect = "";
+                switch (Effect)
+                {
+                    default:
+                    case Effects.None:
+                        effect = "";
+                        break;
+                    case Effects.Realization:
+                        effect = "realization||sfx-realization";
+                        break;
+                    case Effects.Hearts:
+                        effect = "hearts||sfx-squee";
+                        break;
+                    case Effects.Reaction:
+                        effect = "reaction||sfx-reactionding";
+                        break;
+                    case Effects.Impact:
+                        effect = "impact||sfx-fan";
+                        break;
+                }
+                return effect;
+            }
+            set
+            {
+                switch (value)
+                {
+                    default:
+                    case "":
+                        Effect = Effects.None;
+                        break;
+                    case "realization||sfx-realization":
+                        Effect = Effects.Realization;
+                        break;
+                    case "hearts||sfx-squee":
+                        Effect = Effects.Hearts;
+                        break;
+                    case "reaction||sfx-reactionding":
+                        Effect = Effects.Reaction;
+                        break;
+                    case "impact||sfx-fan":
+                        Effect = Effects.Impact;
+                        break;
+                }
+            }
+        }
         public string Blips { get; set; }
         public string OriginalCommand { get; set; }
 
@@ -81,6 +131,15 @@ namespace AOBot_Testing.Structures
             Cyan = 7,
             Gray = 8,
         }
+
+        public enum Effects
+        {
+            None = 0,
+            Realization = 1,
+            Hearts = 2,
+            Reaction = 3,
+            Impact = 4,
+        }
         #endregion
 
         public ICMessage()
@@ -114,7 +173,7 @@ namespace AOBot_Testing.Structures
             FramesRealization = "";
             FramesSfx = "";
             Additive = false;
-            Effect = "";
+            Effect = Effects.None;
             Blips = "";
             OriginalCommand = "";
         }
@@ -181,7 +240,7 @@ namespace AOBot_Testing.Structures
                     FramesRealization = parts[27],
                     FramesSfx = parts[28],
                     Additive = parts[29] == "1",
-                    Effect = parts[30],
+                    EffectString = parts[30],
                     Blips = parts.Length > 31 ? parts[31].TrimEnd('%') : "",
                     OriginalCommand = message
                 };
@@ -223,6 +282,23 @@ namespace AOBot_Testing.Structures
                     $"{(message.Additive ? "1" : "0")}#" +
                     $"{message.Effect}#" +
                     $"{(string.IsNullOrEmpty(message.Blips) ? "%" : "#%")}";
+        }
+
+        public static Color GetColorFromTextColor(TextColors textColor)
+        {
+            return textColor switch
+            {
+                TextColors.White => Color.FromArgb(247, 247, 247),
+                TextColors.Green => Color.FromArgb(0, 247, 0),
+                TextColors.Red => Color.FromArgb(247, 0, 57),
+                TextColors.Orange => Color.FromArgb(247, 115, 57),
+                TextColors.Blue => Color.FromArgb(107, 198, 247),
+                TextColors.Yellow => Color.FromArgb(247, 247, 0),
+                TextColors.Magenta => Color.FromArgb(247, 115, 247),
+                TextColors.Cyan => Color.FromArgb(128, 247, 247),
+                TextColors.Gray => Color.FromArgb(160, 181, 205),
+                _ => Color.FromArgb(247, 247, 247),
+            };
         }
     }
 }

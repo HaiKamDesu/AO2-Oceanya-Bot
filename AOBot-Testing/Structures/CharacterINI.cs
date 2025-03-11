@@ -6,7 +6,7 @@ namespace AOBot_Testing.Structures
     public class CharacterINI
     {
         #region Static methods
-        static string characterFolder = "D:\\Programs\\Attorney Online\\base\\characters";
+        public static string characterFolder { get => Path.Combine(Globals.BaseFolder, "characters"); }
         static string cacheFile = Path.Combine(Path.GetTempPath(), "characters.json");
         static List<CharacterINI> characterConfigs = new List<CharacterINI>();
         public static List<CharacterINI> FullList
@@ -118,6 +118,7 @@ namespace AOBot_Testing.Structures
                             if (!config.Emotions.ContainsKey(emotionId))
                                 config.Emotions[emotionId] = new Emote();
                             config.Emotions[emotionId] = Emote.ParseEmoteLine(value);
+                            config.Emotions[emotionId].ID = emotionId;
                         }
                         break;
 

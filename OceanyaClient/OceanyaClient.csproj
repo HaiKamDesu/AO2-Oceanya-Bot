@@ -42,4 +42,10 @@
     </Compile>
   </ItemGroup>
 
+  <ItemGroup>
+    <None Update="server.json">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
 </Project>

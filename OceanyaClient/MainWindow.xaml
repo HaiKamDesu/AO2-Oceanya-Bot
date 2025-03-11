@@ -2,8 +2,9 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml" xmlns:components="clr-namespace:OceanyaClient.Components"
         Title="Oceanya Online" 
-        Height="616" Width="528"
-        Icon="/Resources/OceanyaO.ico">
+        Height="580" Width="528"
+        Icon="/Resources/OceanyaO.ico"
+        ResizeMode="NoResize">
     <Canvas x:Name="MainCanvas" Background="#FF585858">
 
         <Rectangle x:Name="bgRectangleOOC" Height="333" Canvas.Left="287" Width="222" Fill="#FF8B8B8B" HorizontalAlignment="Center" VerticalAlignment="Top"/>
@@ -17,9 +18,6 @@
             </DockPanel.Background>
             <components:ICLog x:Name="ICLogControl" DockPanel.Dock="Top" Height="297"/>
         </DockPanel>
-
-
-
 
         <Image x:Name="imgShoutModifierBG" Height="42" Canvas.Left="2" Canvas.Top="296" Width="428" Source="/Resources/ObjectionButtonsBG.png" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="None"/>
         <ToggleButton x:Name="HoldIt" Height="40" Width="102" Canvas.Left="4" Canvas.Top="298" 
@@ -114,36 +112,62 @@
             </ToggleButton.Style>
         </ToggleButton>
 
-
-
-
-
-
-
-
         <Button x:Name="btnAddClient" Height="24" Width="24" BorderBrush="{x:Null}" Foreground="{x:Null}" Padding="0" 
         HorizontalAlignment="Center" VerticalAlignment="Top"
         Click="btnAddClient_Click" Canvas.Left="2" Canvas.Top="24">
-            <Button.Background>
-                <ImageBrush ImageSource="/Resources/Buttons/Plus.png"/>
-            </Button.Background>
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Grid>
+                                    <Image x:Name="ButtonImage" Source="/Resources/Buttons/Plus.png" Stretch="Fill"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ButtonImage" Property="Opacity" Value="0.7"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="ButtonImage" Property="Opacity" Value="0.3"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Button.Style>
         </Button>
 
         <Button x:Name="btnRemoveClient" Height="24" Width="24" BorderBrush="{x:Null}" Foreground="{x:Null}" Padding="0" 
         HorizontalAlignment="Left" VerticalAlignment="Top"
         Click="btnRemoveClient_Click" Canvas.Left="28" Canvas.Top="24">
-            <Button.Background>
-                <ImageBrush ImageSource="/Resources/Buttons/Minus.png"/>
-            </Button.Background>
+            <Button.Style>
+                <Style TargetType="Button">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Button">
+                                <Grid>
+                                    <Image x:Name="ButtonImage" Source="/Resources/Buttons/Minus.png" Stretch="Fill"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsMouseOver" Value="True">
+                                        <Setter TargetName="ButtonImage" Property="Opacity" Value="0.7"/>
+                                    </Trigger>
+                                    <Trigger Property="IsEnabled" Value="False">
+                                        <Setter TargetName="ButtonImage" Property="Opacity" Value="0.3"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </Button.Style>
         </Button>
+
         <components:PageButtonGrid x:Name="EmoteGrid" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="2" Canvas.Top="48" BorderBrush="#FF545454" Background="DimGray" BorderThickness="1,1,1,1" Width="50" Height="248"/>
         <Label x:Name="lblClients" Content="Clients" Height="24" Width="46" VerticalAlignment="Center" HorizontalAlignment="Center" FontFamily="pack://application:,,,/Resources/Fonts/#Igiari Cyrillic" Foreground="White" Canvas.Left="4" Canvas.Top="2"/>
 
         <components:ICMessageSettings x:Name="ICMessageSettingsControl" Canvas.Left="4" Canvas.Top="343" Width="508" Height="257" HorizontalAlignment="Center" VerticalAlignment="Top"/>
-
-
-
-
 
     </Canvas>
 </Window>

@@ -40,11 +40,14 @@ namespace AOBot_Testing.Agents
         public string OOCShowname = "OceanyaBot";
         //Limit on this is 22
         public string ICShowname = "";
+        public string curPos = "";
+        public string curBG = "";
+
         public ICMessage.DeskMods deskMod = ICMessage.DeskMods.Chat;
         public ICMessage.EmoteModifiers emoteMod = ICMessage.EmoteModifiers.NoPreanimation;
         public ICMessage.ShoutModifiers shoutModifiers = ICMessage.ShoutModifiers.Nothing;
         public bool flip = false;
-        public bool realization = false;
+        public ICMessage.Effects effect = ICMessage.Effects.None;
         public ICMessage.TextColors textColor = ICMessage.TextColors.White;
         public bool Immediate = false;
         public bool Additive = false;
@@ -71,6 +74,8 @@ namespace AOBot_Testing.Agents
         public Action<ICMessage> OnICMessageReceived;
         public Action<string, string, bool> OnOOCMessageReceived;
         public Action<CharacterINI> OnChangedCharacter;
+        public Action<string> OnBGChange;
+        public Action<string> OnSideChange;
 
 
         #region Send Message Methods
@@ -107,7 +112,7 @@ namespace AOBot_Testing.Agents
                 }
 
 
-                msg.Side = CurrentINI.Side;
+                msg.Side = curPos;
                 msg.SfxName = currentEmote.sfxName;
                 msg.EmoteModifier = emoteMod;
                 msg.CharId = selectedCharacterIndex;
@@ -115,7 +120,7 @@ namespace AOBot_Testing.Agents
                 msg.ShoutModifier = shoutModifiers;
                 msg.EvidenceID = "0";
                 msg.Flip = flip;
-                msg.Realization = realization;
+                msg.Realization = effect == ICMessage.Effects.Realization;
                 msg.TextColor = textColor;
                 msg.ShowName = ICShowname;
                 msg.OtherCharId = -1;
@@ -127,16 +132,10 @@ namespace AOBot_Testing.Agents
                 msg.FramesRealization = $"-^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";
                 msg.FramesSfx = $"-^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";
                 msg.Additive = Additive;
+                msg.Effect = effect;
                 msg.Blips = "";
 
-                if (realization)
-                {
-                    msg.Effect = "realization||sfx-realization";
-                }
-                else
-                {
-                    msg.Effect = "||";
-                }
+
 
                 string command = ICMessage.GetCommand(msg);
 
@@ -220,6 +219,11 @@ namespace AOBot_Testing.Agents
         public void SetCharacter(CharacterINI character)
         {
             CurrentINI = character;
+            if (string.IsNullOrEmpty(curPos))
+            {
+                curPos = character.Side;
+            }
+
 
             OnChangedCharacter?.Invoke(character);
         }
@@ -227,9 +231,9 @@ namespace AOBot_Testing.Agents
         {
             ICShowname = newShowname;
         }
-        public void SetEmote(string emoteName)
+        public void SetEmote(string emoteDisplayID)
         {
-            currentEmote = CurrentINI.Emotions.Values.First(e => e.Name == emoteName);
+            currentEmote = CurrentINI.Emotions.Values.First(e => e.DisplayID == emoteDisplayID);
         }
         #endregion
 
@@ -299,6 +303,22 @@ namespace AOBot_Testing.Agents
                 //you cant get the char id from an ooc message, so just send -1
                 OnMessageReceived?.Invoke("OOC", "", showname, messageText, -1);
                 OnOOCMessageReceived?.Invoke(showname, messageText, fromServer);
+            }
+            else if (message.StartsWith("SP#"))
+            {
+                var fields = message.Split("#");
+                var newPos = fields[1];
+
+                curPos = newPos;
+                OnSideChange?.Invoke(newPos);
+            }
+            else if (message.StartsWith("BN#"))
+            {
+                var fields = message.Split("#");
+                var newBG = fields[1];
+
+                curBG = newBG;
+                OnBGChange?.Invoke(newBG);
             }
         }
 

@@ -153,17 +153,17 @@ namespace AOBot_Testing.Tests
         }
 
         [Test]
-        public async Task TestG_Realization()
+        public async Task TestG_Effects()
         {
-            testingBot.realization = true;
-            await testingBot.SendICMessage("Testing Realization: true");
+            var effectValues = Enum.GetValues(typeof(ICMessage.Effects)).Cast<ICMessage.Effects>().ToList();
+            foreach (var effect in effectValues)
+            {
+                testingBot.effect = effect;
 
-            await CheckUserInput();
+                await testingBot.SendICMessage($"Testing Effect: {effect.ToString()}");
 
-            testingBot.realization = false;
-            await testingBot.SendICMessage("Testing Realization: false");
-
-            await CheckUserInput();
+                await CheckUserInput();
+            }
 
             await Task.Delay(2000);
         }
@@ -227,9 +227,9 @@ namespace AOBot_Testing.Tests
                 {
                     var emote = kvp.Value;
 
-                    testingBot.SetEmote(emote.Name);
+                    testingBot.SetEmote(emote.DisplayID);
 
-                    await testingBot.SendICMessage($"Testing Emote: {ini} - {emote.Name}");
+                    await testingBot.SendICMessage($"Testing Emote: {ini} - {emote.DisplayID}");
 
                     await CheckUserInput();
                 }
@@ -248,7 +248,7 @@ namespace AOBot_Testing.Tests
             testingBot.emoteMod = ICMessage.EmoteModifiers.NoPreanimation;
             testingBot.shoutModifiers = ICMessage.ShoutModifiers.Nothing;
             testingBot.flip = false;
-            testingBot.realization = false;
+            testingBot.effect = ICMessage.Effects.None;
             testingBot.textColor = ICMessage.TextColors.White;
             testingBot.Immediate = false;
             testingBot.Additive = false;

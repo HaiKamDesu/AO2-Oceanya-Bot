@@ -3,6 +3,8 @@ namespace AOBot_Testing.Structures
 {
     public class Emote
     {
+        public string DisplayID { get => ID + ": " + Name; }
+        public int ID { get; set; }
         public string Name { get; set; }
         public string PreAnimation { get; set; }
         public string Animation { get; set; }
