@@ -280,7 +280,7 @@ namespace AOBot_Testing.Structures
                     $"{message.FramesRealization}#" +
                     $"{message.FramesSfx}#" +
                     $"{(message.Additive ? "1" : "0")}#" +
-                    $"{message.Effect}#" +
+                    $"{message.EffectString}#" +
                     $"{(string.IsNullOrEmpty(message.Blips) ? "%" : "#%")}";
         }
 

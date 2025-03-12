@@ -5,6 +5,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Input;
+using System.Windows.Media;
 using System.Windows.Media.Imaging;
 
 namespace OceanyaClient.Components
@@ -36,6 +37,29 @@ namespace OceanyaClient.Components
                 }
             }
         }
+        public static readonly DependencyProperty ShowImageProperty =
+            DependencyProperty.Register("ShowImage", typeof(bool), typeof(ImageComboBox),
+                new PropertyMetadata(true));
+
+        public static readonly DependencyProperty IsEditableProperty =
+            DependencyProperty.Register("IsEditable", typeof(bool), typeof(ImageComboBox),
+                new PropertyMetadata(true));
+
+        public bool ShowImage
+        {
+            get { return (bool)GetValue(ShowImageProperty); }
+            set { SetValue(ShowImageProperty, value); }
+        }
+
+        public bool IsEditable
+        {
+            get { return (bool)GetValue(IsEditableProperty); }
+            set { SetValue(IsEditableProperty, value); }
+        }
+        Grid grid;
+        private ColumnDefinition columnIcon;
+        private ColumnDefinition columnText;
+        private ColumnDefinition columnDropdown;
 
         public ImageComboBox()
         {
@@ -240,7 +264,7 @@ namespace OceanyaClient.Components
 
         public void SetComboBoxReadOnly(bool isReadOnly)
         {
-            this.isReadOnly = isReadOnly;
+            this.isReadOnly = !isReadOnly;
         }
 
         public void SetSelectedItemImage(string imagePath)
@@ -268,6 +292,9 @@ namespace OceanyaClient.Components
             }
         }
 
+        public void SetImageFieldVisible(bool isVisible)
+        {
+        }
 
     }
 }

@@ -48,6 +48,7 @@ namespace AOBot_Testing.Agents
         public ICMessage.ShoutModifiers shoutModifiers = ICMessage.ShoutModifiers.Nothing;
         public bool flip = false;
         public ICMessage.Effects effect = ICMessage.Effects.None;
+        public bool screenshake = false;
         public ICMessage.TextColors textColor = ICMessage.TextColors.White;
         public bool Immediate = false;
         public bool Additive = false;
@@ -127,7 +128,7 @@ namespace AOBot_Testing.Agents
                 msg.SelfOffset = SelfOffset;
                 msg.NonInterruptingPreAnim = Immediate;
                 msg.SfxLooping = false;
-                msg.ScreenShake = false;
+                msg.ScreenShake = screenshake;
                 msg.FramesShake = $"-^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";
                 msg.FramesRealization = $"-^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";
                 msg.FramesSfx = $"-^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";

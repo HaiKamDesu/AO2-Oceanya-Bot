@@ -9,7 +9,7 @@
     <Canvas>
         <Rectangle Height="115" Canvas.Top="22" Width="452" Fill="#FF464646" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="29">
             <Rectangle.OpacityMask>
-                <ImageBrush ImageSource="/Resources/OceanyaFullLogo.png" Stretch="UniformToFill"/>
+                <ImageBrush ImageSource="pack://application:,,,/OceanyaClient;component/Resources/OceanyaFullLogo.png" Stretch="UniformToFill"/>
             </Rectangle.OpacityMask>
         </Rectangle>
         <Rectangle x:Name="bgSettings" Height="153" Canvas.Top="137" Width="505" Fill="#FF4E5056" HorizontalAlignment="Center" VerticalAlignment="Top"/>
@@ -65,5 +65,49 @@
         <components:ImageComboBox x:Name="TextColorDropdown" Canvas.Top="168" Width="156" HorizontalAlignment="Left" VerticalAlignment="Center"/>
         <components:ImageComboBox x:Name="EffectDropdown" Canvas.Top="168" Width="156" Canvas.Left="161" HorizontalAlignment="Left" VerticalAlignment="Center"/>
         <components:ImageComboBox x:Name="sfxDropdown" Canvas.Top="168" Width="156" Canvas.Left="322" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+        <ToggleButton x:Name="btnRealization" Height="42" Width="42" Canvas.Left="8" Canvas.Top="215" 
+                        BorderBrush="{x:Null}" Padding="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Checked="btnRealization_Checked" Unchecked="btnRealization_Unchecked">
+            <ToggleButton.Style>
+                <Style TargetType="{x:Type ToggleButton}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                <Grid>
+                                    <Image x:Name="ButtonImage" Source="pack://application:,,,/OceanyaClient;component/Resources/Buttons/realization.png"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="ButtonImage" Property="Source" Value="pack://application:,,,/OceanyaClient;component/Resources/Buttons/realization_pressed.png"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ToggleButton.Style>
+        </ToggleButton>
+        <ToggleButton x:Name="btnScreenshake" Height="42" Width="42" Canvas.Left="55" Canvas.Top="215" 
+            BorderBrush="{x:Null}" Padding="0,0,0,0"
+            Checked="btnScreenshake_Checked" Unchecked="btnScreenshake_Unchecked" HorizontalAlignment="Left" VerticalAlignment="Top">
+            <ToggleButton.Style>
+                <Style TargetType="{x:Type ToggleButton}">
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="{x:Type ToggleButton}">
+                                <Grid>
+                                    <Image x:Name="ButtonImage" Source="pack://application:,,,/OceanyaClient;component/Resources/Buttons/screenshake.png"/>
+                                </Grid>
+                                <ControlTemplate.Triggers>
+                                    <Trigger Property="IsChecked" Value="True">
+                                        <Setter TargetName="ButtonImage" Property="Source" Value="pack://application:,,,/OceanyaClient;component/Resources/Buttons/screenshake_pressed.png"/>
+                                    </Trigger>
+                                </ControlTemplate.Triggers>
+                            </ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </Style>
+            </ToggleButton.Style>
+        </ToggleButton>
     </Canvas>
 </UserControl>

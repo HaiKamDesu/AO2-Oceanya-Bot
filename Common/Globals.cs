@@ -14,9 +14,17 @@ using System.Threading.Tasks;
 
         private static Dictionary<Servers, string> LoadServerIPs()
         {
-            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "server.json");
-            var json = File.ReadAllText(filePath);
-            return JsonSerializer.Deserialize<Dictionary<Servers, string>>(json);
+            try
+            {
+                var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "server.json");
+                var json = File.ReadAllText(filePath);
+                return JsonSerializer.Deserialize<Dictionary<Servers, string>>(json);
+
+            }
+            catch
+            {
+                return new Dictionary<Servers, string>();
+            }
         }
 
     public static string AI_SYSTEM_PROMPT = @"

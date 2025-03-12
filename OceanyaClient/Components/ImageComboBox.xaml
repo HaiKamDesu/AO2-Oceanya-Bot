@@ -39,9 +39,9 @@
                     Background="{TemplateBinding Background}"
                     BorderBrush="{TemplateBinding BorderBrush}"
                     BorderThickness="1">
-                            <Grid>
+                            <Grid x:Name="grdBorder">
                                 <Grid.ColumnDefinitions>
-                                    <ColumnDefinition Width="Auto" MinWidth="20"/>
+                                    <ColumnDefinition x:Name="columnIcon" Width="Auto" MinWidth="20"/>
                                     <!-- Icon Column -->
                                     <ColumnDefinition Width="*" />
                                     <!-- Editable Text Column -->
@@ -67,18 +67,21 @@
                              TextWrapping="NoWrap"/>
 
                                 <!-- Dropdown Button (Fixed Width) -->
-                                <ToggleButton Grid.Column="2"
-                                  Width="30"
-                                  BorderBrush="#FF7D7D7D"
+                                <Border x:Name="Test" Grid.Column="2"
+                                    CornerRadius="3,2,2,3"
+                                    BorderThickness="1" BorderBrush="#FF7D7D7D">
+                                    <ToggleButton x:Name="btnDropdown" Grid.Column="2"
+                                  BorderBrush="{x:Null}"
                                   ClickMode="Press"
                                   Background="DarkGray"
                                   IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
-                                    <Path Width="10" Height="6"
+                                        <Path Width="10" Height="6"
                               Fill="Black"
                               Data="M 0 0 L 10 0 L 5 6 Z"
                               VerticalAlignment="Center"
                               HorizontalAlignment="Center"/>
-                                </ToggleButton>
+                                    </ToggleButton>
+                                </Border>
                             </Grid>
                         </Border>
 

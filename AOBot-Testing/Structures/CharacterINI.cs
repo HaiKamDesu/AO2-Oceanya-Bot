@@ -119,6 +119,15 @@ namespace AOBot_Testing.Structures
                                 config.Emotions[emotionId] = new Emote();
                             config.Emotions[emotionId] = Emote.ParseEmoteLine(value);
                             config.Emotions[emotionId].ID = emotionId;
+
+                            if (Emote.trigger)
+                            {
+                                Emote.trigger = false;
+                                if (!Emote.charInisWithMoreThan5PartsInEmotes.Contains(filePath))
+                                {
+                                    Emote.charInisWithMoreThan5PartsInEmotes.Add(filePath);
+                                }
+                            }
                         }
                         break;
 

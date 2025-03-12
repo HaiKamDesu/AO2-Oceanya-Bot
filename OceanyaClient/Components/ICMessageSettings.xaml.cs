@@ -91,6 +91,8 @@ namespace OceanyaClient.Components
                 EffectDropdown.Add(effect.ToString(), effect == ICMessage.Effects.None ? "" : path);
             }
             EffectDropdown.OnConfirm += EffectDropdown_OnConfirm;
+
+            sfxDropdown.SetImageFieldVisible(false);
         }
 
         private void EffectDropdown_OnConfirm(object? sender, string newEffect)
@@ -369,6 +371,43 @@ namespace OceanyaClient.Components
             if (sender is CheckBox checkBox)
             {
                 curClient.Immediate = checkBox.IsChecked == true;
+            }
+        }
+
+        private void btnRealization_Checked(object sender, RoutedEventArgs e)
+        {
+            // Handle the checked state
+            if (sender is ToggleButton toggleButton)
+            {
+                EffectDropdown.SelectedText = ICMessage.Effects.Realization.ToString();
+            }
+        }
+
+        private void btnRealization_Unchecked(object sender, RoutedEventArgs e)
+        {
+            // Handle the unchecked state
+            if (sender is ToggleButton toggleButton)
+            {
+                if(EffectDropdown.SelectedText == ICMessage.Effects.Realization.ToString())
+                    EffectDropdown.SelectedText = ICMessage.Effects.None.ToString();
+            }
+        }
+
+        private void btnScreenshake_Checked(object sender, RoutedEventArgs e)
+        {
+            // Handle the checked state
+            if (sender is ToggleButton toggleButton)
+            {
+                curClient.screenshake = true;
+            }
+        }
+
+        private void btnScreenshake_Unchecked(object sender, RoutedEventArgs e)
+        {
+            // Handle the unchecked state
+            if (sender is ToggleButton toggleButton)
+            {
+                curClient.screenshake = false;
             }
         }
     }
