@@ -44,7 +44,7 @@ namespace AOBot_Testing.Structures
                 {
                     default:
                     case Effects.None:
-                        effect = "";
+                        effect = "||";
                         break;
                     case Effects.Realization:
                         effect = "realization||sfx-realization";

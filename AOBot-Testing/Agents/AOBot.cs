@@ -115,7 +115,7 @@ namespace AOBot_Testing.Agents
 
                 msg.Side = curPos;
                 msg.SfxName = currentEmote.sfxName;
-                msg.EmoteModifier = emoteMod;
+                msg.EmoteModifier = Immediate ? ICMessage.EmoteModifiers.NoPreanimation : emoteMod;
                 msg.CharId = selectedCharacterIndex;
                 msg.SfxDelay = currentEmote.sfxDelay;
                 msg.ShoutModifier = shoutModifiers;
@@ -129,9 +129,9 @@ namespace AOBot_Testing.Agents
                 msg.NonInterruptingPreAnim = Immediate;
                 msg.SfxLooping = false;
                 msg.ScreenShake = screenshake;
-                msg.FramesShake = $"-^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";
-                msg.FramesRealization = $"-^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";
-                msg.FramesSfx = $"-^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";
+                msg.FramesShake = $"{currentEmote.PreAnimation}^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";
+                msg.FramesRealization = $"{currentEmote.PreAnimation}^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";
+                msg.FramesSfx = $"{currentEmote.PreAnimation}^(b){currentEmote.Animation}^(a){currentEmote.Animation}^";
                 msg.Additive = Additive;
                 msg.Effect = effect;
                 msg.Blips = "";
@@ -455,10 +455,13 @@ namespace AOBot_Testing.Agents
                 await Task.Delay(10000); // Enviar un ping cada 10 segundos
             }
         }
+        bool dead = false;
+
         public async Task Disconnect()
         {
             if (ws != null && ws.State == WebSocketState.Open)
             {
+                dead = true;
                 await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnecting", CancellationToken.None);
                 ws.Dispose();
                 ws = null;
@@ -568,10 +571,13 @@ namespace AOBot_Testing.Agents
                 if (ws == null || ws.State != WebSocketState.Open)
                 {
                     aliveTime.Stop();
-                    CustomConsole.WriteLine($"WebSocket connection lost after {aliveTime.Elapsed}. Attempting to reconnect...");
-                    CustomConsole.WriteLine("===========================");
-                    await Reconnect();
-                    CustomConsole.WriteLine("===========================");
+                    if (!dead)
+                    {
+                        CustomConsole.WriteLine("WebSocket connection lost. Attempting to reconnect...");
+                        CustomConsole.WriteLine("===========================");
+                        await Reconnect();
+                        CustomConsole.WriteLine("===========================");
+                    }
                 }
             }
         }

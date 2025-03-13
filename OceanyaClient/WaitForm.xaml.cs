@@ -40,16 +40,18 @@ namespace OceanyaClient
             Height = formattedText.Height + 20; // Add some padding
         }
 
-        public static void ShowForm(string message, Window owner)
+        public static async Task ShowFormAsync(string message, Window owner)
         {
             if (_instance == null)
             {
                 _instance = new WaitForm(message, owner);
                 _instance.Show();
                 _instance.Activate();
+                _instance.Focus();
 
                 DoubleAnimation fadeInAnimation = new DoubleAnimation(0, 1, TimeSpan.FromSeconds(0.5));
                 _instance.BeginAnimation(Window.OpacityProperty, fadeInAnimation);
+                await Task.Delay(fadeInAnimation.Duration.TimeSpan);
             }
             else
             {

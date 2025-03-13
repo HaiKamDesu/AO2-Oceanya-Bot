@@ -4,7 +4,8 @@
         Title="Oceanya Online" 
         Height="651" Width="528"
         Icon="/Resources/OceanyaO.ico"
-        ResizeMode="NoResize">
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterScreen">
     <Canvas x:Name="MainCanvas" Background="#FF585858">
 
         <Rectangle x:Name="bgRectangleOOC" Height="333" Canvas.Left="287" Width="222" Fill="#FF8B8B8B" HorizontalAlignment="Center" VerticalAlignment="Top"/>
@@ -22,7 +23,8 @@
         <Image x:Name="imgShoutModifierBG" Height="42" Canvas.Left="2" Canvas.Top="296" Width="428" Source="/Resources/ObjectionButtonsBG.png" HorizontalAlignment="Left" VerticalAlignment="Top" Stretch="None"/>
         <ToggleButton x:Name="HoldIt" Height="40" Width="102" Canvas.Left="4" Canvas.Top="298" 
       BorderBrush="{x:Null}" HorizontalAlignment="Left" VerticalAlignment="Top"
-      Padding="0,0,0,0" Checked="ToggleButton_Checked">
+      Padding="0,0,0,0" Checked="ToggleButton_Checked"
+                      Focusable="False" IsTabStop="False">
             <ToggleButton.Style>
                 <Style TargetType="{x:Type ToggleButton}">
                     <Setter Property="Template">
@@ -45,7 +47,8 @@
 
         <ToggleButton x:Name="Objection" Height="40" Width="102" Canvas.Left="111" Canvas.Top="298" 
     BorderBrush="{x:Null}" Padding="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-    Checked="ToggleButton_Checked">
+    Checked="ToggleButton_Checked"
+                      Focusable="False" IsTabStop="False">
             <ToggleButton.Style>
                 <Style TargetType="{x:Type ToggleButton}">
                     <Setter Property="Template">
@@ -68,7 +71,8 @@
 
         <ToggleButton x:Name="TakeThat" Height="40" Width="102" Canvas.Left="218" Canvas.Top="298" 
     BorderBrush="{x:Null}" Padding="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
-    Checked="ToggleButton_Checked">
+    Checked="ToggleButton_Checked"
+                      Focusable="False" IsTabStop="False">
             <ToggleButton.Style>
                 <Style TargetType="{x:Type ToggleButton}">
                     <Setter Property="Template">
@@ -91,7 +95,8 @@
 
         <ToggleButton x:Name="Custom" Height="40" Width="102" Canvas.Left="324" Canvas.Top="298" 
     BorderBrush="{x:Null}" Padding="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
-    Checked="ToggleButton_Checked">
+    Checked="ToggleButton_Checked"
+                      Focusable="False" IsTabStop="False">
             <ToggleButton.Style>
                 <Style TargetType="{x:Type ToggleButton}">
                     <Setter Property="Template">

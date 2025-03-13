@@ -26,6 +26,7 @@ namespace OceanyaClient
         public MainWindow()
         {
             InitializeComponent();
+
             objectionModifiers = new List<ToggleButton> { HoldIt, Objection, TakeThat, Custom };
             // Set grid mode and size
             EmoteGrid.SetScrollMode(PageButtonGrid.ScrollMode.Vertical);
@@ -69,136 +70,36 @@ namespace OceanyaClient
                     client = currentClient;
                 }
 
-                
-                await client.SendICMessage(sendMessage.Trim());
-            };
-
-            OpenConfigurationWindow();
-
-            //ICLogControl.AddMessage("TestingShowname", "a", true);
-            //OOCLogControl.AddMessage("TestingShowname", "a", true);
-            //for (int i = 0; i < 5; i++)
-            //{
-            //    ICLogControl.AddMessage("TestingShowname", "TestingMessage"+i);
-            //    OOCLogControl.AddMessage("TestingShowname", "TestingMessage" + i);
-            //}
-
-
-        }
-
-        private void OpenConfigurationWindow()
-        {
-            Window configWindow = new Window
-            {
-                Width = 450,
-                Height = 250,
-                WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                Title = "Configuration",
-                ResizeMode = ResizeMode.NoResize
-            };
-
-            StackPanel panel = new StackPanel { Margin = new Thickness(10) };
-
-            // Attorney_Online.exe path
-            TextBlock exePathLabel = new TextBlock { Text = "Attorney_Online.exe Path:", Margin = new Thickness(0, 0, 0, 5) };
-            TextBox exePathTextBox = new TextBox { MinWidth = 300 };
-            Button browseButton = new Button { Content = "Browse", Width = 75, Margin = new Thickness(5, 0, 0, 0) };
-            browseButton.Click += (s, e) =>
-            {
-                Microsoft.Win32.OpenFileDialog openFileDialog = new Microsoft.Win32.OpenFileDialog
+                if (!string.IsNullOrWhiteSpace(sendMessage))
                 {
-                    Filter = "Executable files (*.exe)|*.exe",
-                    Title = "Select Attorney_Online.exe"
-                };
-                if (openFileDialog.ShowDialog() == true)
-                {
-                    exePathTextBox.Text = openFileDialog.FileName;
+                    sendMessage = sendMessage.Trim();
                 }
-            };
-
-            StackPanel exePathPanel = new StackPanel { Orientation = Orientation.Horizontal };
-            exePathPanel.Children.Add(exePathTextBox);
-            exePathPanel.Children.Add(browseButton);
-
-            // Connection path
-            TextBlock connectionPathLabel = new TextBlock { Text = "Connection Path (e.g., Basement/testing):", Margin = new Thickness(0, 10, 0, 5) };
-            TextBox connectionPathTextBox = new TextBox { MinWidth = 300 };
-
-            // Refresh character and background info checkbox
-            CheckBox refreshInfoCheckBox = new CheckBox { Content = "Refresh character and background info", Margin = new Thickness(0, 10, 0, 0) };
-
-            // Load saved configuration
-            LoadConfiguration(exePathTextBox, connectionPathTextBox);
-
-            // OK button
-            Button okButton = new Button { Content = "OK", Width = 75, Margin = new Thickness(0, 10, 0, 0), IsDefault = true };
-            okButton.Click += (s, e) =>
-            {
-                // Save the configuration
-                string exePath = exePathTextBox.Text;
-                string connectionPath = connectionPathTextBox.Text;
-
-                // Validate inputs
-                if (string.IsNullOrWhiteSpace(exePath) || string.IsNullOrWhiteSpace(connectionPath))
+                else if(sendMessage == "")
                 {
-                    MessageBox.Show("Please provide both the Attorney_Online.exe path and the connection path.", "Invalid Input", MessageBoxButton.OK, MessageBoxImage.Warning);
-                    return;
+                    sendMessage = " ";
                 }
 
-                // Save to settings or use as needed
-                Globals.BaseFolder = Path.Combine(Path.GetDirectoryName(exePath), "base");
-                Globals.ConnectionString = connectionPath;
+                client.shoutModifiers = ICMessage.ShoutModifiers.Nothing;
 
-                // Save configuration to file
-                SaveConfiguration(exePath, connectionPath);
-
-                // Refresh character and background info if checkbox is checked
-                if (refreshInfoCheckBox.IsChecked == true)
+                if (HoldIt.IsChecked.Value)
                 {
-                    WaitForm.ShowForm("Refreshing character and background info...", configWindow);
-                    CharacterINI.RefreshCharacterList();
-                    WaitForm.CloseForm();
+                    client.shoutModifiers = ICMessage.ShoutModifiers.HoldIt;
+                }
+                else if (Objection.IsChecked.Value)
+                {
+                    client.shoutModifiers = ICMessage.ShoutModifiers.Objection;
+                }
+                else if (TakeThat.IsChecked.Value)
+                {
+                    client.shoutModifiers = ICMessage.ShoutModifiers.TakeThat;
+                }
+                else if (Custom.IsChecked.Value)
+                {
+                    client.shoutModifiers = ICMessage.ShoutModifiers.Custom;
                 }
 
-                configWindow.Close();
+                await client.SendICMessage(sendMessage);
             };
-
-            panel.Children.Add(exePathLabel);
-            panel.Children.Add(exePathPanel);
-            panel.Children.Add(connectionPathLabel);
-            panel.Children.Add(connectionPathTextBox);
-            panel.Children.Add(refreshInfoCheckBox);
-            panel.Children.Add(okButton);
-
-            configWindow.Content = panel;
-            configWindow.ShowDialog();
-        }
-
-        private void SaveConfiguration(string exePath, string connectionPath)
-        {
-            var config = new { ExePath = exePath, ConnectionPath = connectionPath };
-            string json = JsonSerializer.Serialize(config);
-            string configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OceanyaClient", "config.json");
-
-            Directory.CreateDirectory(Path.GetDirectoryName(configFilePath));
-            File.WriteAllText(configFilePath, json);
-        }
-
-        private void LoadConfiguration(TextBox exePathTextBox, TextBox connectionPathTextBox)
-        {
-            string configFilePath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "OceanyaClient", "config.json");
-
-            if (File.Exists(configFilePath))
-            {
-                string json = File.ReadAllText(configFilePath);
-                var config = JsonSerializer.Deserialize<Dictionary<string, string>>(json);
-
-                if (config != null)
-                {
-                    exePathTextBox.Text = config["ExePath"];
-                    connectionPathTextBox.Text = config["ConnectionPath"];
-                }
-            }
         }
 
         private void AddClient(string clientName)
@@ -207,8 +108,8 @@ namespace OceanyaClient
         }
         private async Task AddClientAsync(string clientName)
         {
-            IsEnabled = false;
-            WaitForm.ShowForm("Connecting client...", this);
+            IsEnabled = false;  
+            await WaitForm.ShowFormAsync("Connecting client...", this);
 
             try
             {
@@ -351,6 +252,9 @@ namespace OceanyaClient
                 };
 
                 bot.SetCharacter(bot.currentINI);
+
+                toggleBtn.Focusable = false;
+                toggleBtn.IsTabStop = false;
 
                 clients.Add(toggleBtn, bot);
 

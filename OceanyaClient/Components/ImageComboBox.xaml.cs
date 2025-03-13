@@ -102,7 +102,13 @@ namespace OceanyaClient.Components
 
         string userTypedInput = "";
         private void cboINISelect_KeyDown(object sender, KeyEventArgs e)
-       {
+        {
+            if (this.isReadOnly)
+            {
+                e.Handled = true;
+                return;
+            }
+
             if (e.Key == Key.Enter)
             {
                 e.Handled = true;
@@ -213,8 +219,11 @@ namespace OceanyaClient.Components
             get => cboINISelect.Text;
             set 
             {
+                var prevFocusable = editableTextBox.Focusable;
+                editableTextBox.Focusable = false;
                 cboINISelect.Text = value;
                 ConfirmSelection(cboINISelect.Text);
+                editableTextBox.Focusable = prevFocusable;
             }
         }
 
@@ -233,11 +242,6 @@ namespace OceanyaClient.Components
             {
                 SetSelectedItemImage("");
             }
-
-                cboINISelect.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    Keyboard.ClearFocus();
-                }), System.Windows.Threading.DispatcherPriority.Background);
 
             OnConfirm?.Invoke(this, text); // Fire event with selected text
         }
@@ -258,13 +262,16 @@ namespace OceanyaClient.Components
             {
                 allItems.Clear();
                 cboINISelect.ItemsSource = null;
-                cboINISelect.Text = string.Empty;
             });
         }
 
         public void SetComboBoxReadOnly(bool isReadOnly)
         {
-            this.isReadOnly = !isReadOnly;
+            this.isReadOnly = isReadOnly;
+            Focusable = !isReadOnly;
+            IsTabStop = !isReadOnly;
+            //cboINISelect.Focusable = !isReadOnly;
+            //cboINISelect.Focusable = !isReadOnly;
         }
 
         public void SetSelectedItemImage(string imagePath)
@@ -296,5 +303,22 @@ namespace OceanyaClient.Components
         {
         }
 
+        private void EditableTextBox_PreviewMouseDown(object sender, MouseButtonEventArgs e)
+        {
+            if (isReadOnly)
+            {
+                e.Handled = true; // Prevents the TextBox from being clicked/focused
+                cboINISelect.IsDropDownOpen = !cboINISelect.IsDropDownOpen;
+            }
+        }
+
+        private void EditableTextBox_PreviewGotKeyboardFocus(object sender, KeyboardFocusChangedEventArgs e)
+        {
+            if (isReadOnly)
+            {
+                e.Handled = true; // Prevents the TextBox from being clicked/focused
+                cboINISelect.IsDropDownOpen = !cboINISelect.IsDropDownOpen;
+            }
+        }
     }
 }

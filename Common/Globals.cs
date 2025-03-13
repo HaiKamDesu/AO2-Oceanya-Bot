@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
     public static class Globals
     {
-        public static string BaseFolder = "D:\\Programs\\Attorney Online\\base";
+        public static string BaseFolder = "";
         public static string ConnectionString = "Basement/testing";
         public enum Servers { ChillAndDices, Vanilla, CaseCafe }
         public static Dictionary<Servers, string> IPs = LoadServerIPs();

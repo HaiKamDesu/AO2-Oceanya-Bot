@@ -5,7 +5,8 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OceanyaClient.Components"
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800">
+             d:DesignHeight="450" d:DesignWidth="800"
+             Focusable="False" IsTabStop="False">
 
     <UserControl.Resources>
         <Style TargetType="Button">
@@ -52,20 +53,20 @@
         </Grid.ColumnDefinitions>
 
         <!-- Up Button (Only visible in Vertical Mode) -->
-        <Button Content="↑" Click="UpPage_Click" Grid.Row="0" Grid.Column="1" Visibility="Collapsed" Name="UpButton"/>
+        <Button Content="↑" Click="UpPage_Click" Grid.Row="0" Grid.Column="1" Visibility="Collapsed" Name="UpButton" Focusable="False" IsTabStop="False"/>
 
         <!-- Left Button (Only visible in Horizontal Mode) -->
-        <Button Content="←" Click="LeftPage_Click" Grid.Row="1" Grid.Column="0" Visibility="Collapsed" Name="LeftButton"/>
+        <Button Content="←" Click="LeftPage_Click" Grid.Row="1" Grid.Column="0" Visibility="Collapsed" Name="LeftButton" Focusable="False" IsTabStop="False"/>
 
         <!-- Main Grid (Holds Items) inside a ScrollViewer to prevent overflow -->
-        <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" Focusable="False" IsTabStop="False">
             <Grid Name="TestingGrid" />
         </ScrollViewer>
 
         <!-- Right Button (Only visible in Horizontal Mode) -->
-        <Button Content="→" Click="RightPage_Click" Grid.Row="1" Grid.Column="2" Visibility="Collapsed" Name="RightButton"/>
+        <Button Content="→" Click="RightPage_Click" Grid.Row="1" Grid.Column="2" Visibility="Collapsed" Name="RightButton" Focusable="False" IsTabStop="False"/>
 
         <!-- Down Button (Only visible in Vertical Mode) -->
-        <Button Content="↓" Click="DownPage_Click" Grid.Row="2" Grid.Column="1" Visibility="Collapsed" Name="DownButton"/>
+        <Button Content="↓" Click="DownPage_Click" Grid.Row="2" Grid.Column="1" Visibility="Collapsed" Name="DownButton" Focusable="False" IsTabStop="False"/>
     </Grid>
 </UserControl>

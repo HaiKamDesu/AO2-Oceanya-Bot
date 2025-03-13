@@ -8,7 +8,8 @@
         Width="238"
         Height="56"
         ResizeMode="NoResize"
-        ShowInTaskbar="False">
+        ShowInTaskbar="True"
+        WindowStartupLocation="CenterOwner">
     <Grid Background="#AA000000">
         <TextBlock x:Name="lblMessage" Text="Connecting new client..." 
                    Foreground="White" 

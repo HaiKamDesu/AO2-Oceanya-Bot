@@ -83,6 +83,7 @@ namespace OceanyaClient.Components
             }
             TextColorDropdown.OnConfirm += TextColorDropdown_OnConfirm;
 
+            TextColorDropdown.SetComboBoxReadOnly(true);
 
             EffectDropdown.SetComboBoxReadOnly(true);
             foreach (var effect in Enum.GetValues(typeof(ICMessage.Effects)).Cast<ICMessage.Effects>())
@@ -193,22 +194,30 @@ namespace OceanyaClient.Components
             {
                 PositionDropdown.Clear();
                 var bg = AOBot_Testing.Structures.Background.FromBGPath(client.curBG);
-                var allPos = bg.GetPossiblePositions();
-                foreach (var pos in allPos)
+
+                if(bg != null)
                 {
-                    PositionDropdown.Add(pos.Key, pos.Value);
-                }
-                if (allPos.ContainsKey(client.curPos))
-                {
-                    PositionDropdown.SelectedText = client.curPos;
-                }
-                else if (allPos.ContainsKey(client.currentINI.Side))
-                {
-                    PositionDropdown.SelectedText = client.currentINI.Side;
+                    var allPos = bg.GetPossiblePositions();
+                    foreach (var pos in allPos)
+                    {
+                        PositionDropdown.Add(pos.Key, pos.Value);
+                    }
+                    if (allPos.ContainsKey(client.curPos))
+                    {
+                        PositionDropdown.SelectedText = client.curPos;
+                    }
+                    else if (allPos.ContainsKey(client.currentINI.Side))
+                    {
+                        PositionDropdown.SelectedText = client.currentINI.Side;
+                    }
+                    else
+                    {
+                        PositionDropdown.SelectedText = allPos.First().Key;
+                    }
                 }
                 else
                 {
-                    PositionDropdown.SelectedText = allPos.First().Key;
+                    PositionDropdown.SelectedText = client.currentINI.Side;
                 }
             });
         }
@@ -242,7 +251,9 @@ namespace OceanyaClient.Components
             {
                 Width = 40,
                 Height = 40,
-                ToolTip = emote.DisplayID
+                ToolTip = emote.DisplayID,
+                Focusable = false,
+                IsTabStop = false
             };
 
             toggleBtn.Checked += EmoteToggleBtn_Checked;
@@ -282,6 +293,8 @@ namespace OceanyaClient.Components
 
             EmoteDropdown.Add(emote.DisplayID, emote.PathToImage_off);
 
+            toggleBtn.Focusable = false;
+            toggleBtn.IsTabStop = false;
             EmoteGrid.AddElement(toggleBtn);
             emotes.Add(emote, toggleBtn);
         }
