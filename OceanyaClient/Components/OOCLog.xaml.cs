@@ -1,5 +1,6 @@
-﻿using System;
-using System.Text.RegularExpressions;
+﻿using AOBot_Testing.Agents;
+using System;
+using System.Collections.Generic;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
@@ -12,58 +13,135 @@ namespace OceanyaClient.Components
     {
         public Action<string, string> OnSendOOCMessage;
 
+        private Dictionary<AOClient, FlowDocument> clientLogs = new Dictionary<AOClient, FlowDocument>();
+
+        private AOClient currentClient = null;
+        private ScrollViewer ScrollViewer;
+
         public OOCLog()
         {
             InitializeComponent();
+            LogBox.Document = new FlowDocument();
 
-            LogBox.Document.Blocks.Clear();
-            // adds a really really big block of new lines to the log directly through the logbox variable
-            LogBox.AppendText(new string('\n', 20));
-            ScrollViewer.ScrollToEnd();
+            Loaded += OOCLog_Loaded;
         }
 
-        public void AddMessage(string showName, string message, bool isSentFromServer = false)
+        private void OOCLog_Loaded(object sender, RoutedEventArgs e)
         {
-            // Convert ~text~ to red color text
-            message = ConvertFormatting(message);
+            ScrollViewer = GetScrollViewer(LogBox);
+        }
 
-            // Create a new paragraph
+        public void SetCurrentClient(AOClient client)
+        {
+            currentClient = client;
+
+            if (!clientLogs.ContainsKey(client))
+            {
+                clientLogs[client] = new FlowDocument();
+            }
+
+            LogBox.Document = clientLogs[client];
+            UpdateStreamLabel(client);
+            ScrollToBottom();
+        }
+
+        public void UpdateStreamLabel(AOClient client)
+        {
+            lblStream.Content = client != null ? $"[{client.clientName} (ID: {client.playerID})]" : "[STREAM]";
+        }
+
+        public void AddMessage(AOClient client, string showName, string message, bool isSentFromServer = false)
+        {
+            if (client == null)
+            {
+                DisplayMessage("System", "No client selected. Message not stored.", true);
+                return;
+            }
+
+            if (!clientLogs.ContainsKey(client))
+            {
+                clientLogs[client] = new FlowDocument();
+            }
+
+            bool shouldScroll = IsScrolledToBottom();
+
+            FlowDocument clientDoc = clientLogs[client];
+
             Paragraph paragraph = new Paragraph
             {
-                Margin = new Thickness(0, 2, 0, 2), // Adjust vertical spacing
-                LineHeight = 2 // Increase/decrease for more spacing
+                Margin = new Thickness(0, 2, 0, 2),
+                LineHeight = 2
             };
 
-            // Add the player's show name in bold
-            Run nameRun = new Run($"{showName}: ") { FontWeight = System.Windows.FontWeights.Bold };
-            if (isSentFromServer)
-            {
-                nameRun.Foreground = new SolidColorBrush(Color.FromArgb(0xFF, 0x5F, 0x5F, 0x00));
-            }
-            else
-            {
-                nameRun.Foreground = Brushes.DarkBlue;
-            }
+            Run nameRun = new Run($"{showName}: ") { FontWeight = FontWeights.Bold };
+            nameRun.Foreground = isSentFromServer
+                ? new SolidColorBrush(Color.FromArgb(0xFF, 0x5F, 0x5F, 0x00))
+                : Brushes.DarkBlue;
 
-                paragraph.Inlines.Add(nameRun);
-
-            // Add formatted message
+            paragraph.Inlines.Add(nameRun);
             paragraph.Inlines.Add(new Run(message));
 
-            // Append to the log
-            LogBox.Document.Blocks.Add(paragraph);
+            clientDoc.Blocks.Add(paragraph);
 
-            // Auto-scroll to the bottom
-            // Ensure UI updates before scrolling
-            LogBox.Dispatcher.InvokeAsync(() =>
+            if (client == currentClient)
             {
-                LogBox.ScrollToEnd();
-            }, System.Windows.Threading.DispatcherPriority.Background);
+                LogBox.Document = clientDoc;
+                if (shouldScroll)
+                    ScrollToBottom();
+            }
         }
 
-        private string ConvertFormatting(string message)
+        private ScrollViewer GetScrollViewer(DependencyObject dep)
         {
-            return message;
+            if (dep is ScrollViewer) return dep as ScrollViewer;
+
+            for (int i = 0; i < VisualTreeHelper.GetChildrenCount(dep); i++)
+            {
+                var child = VisualTreeHelper.GetChild(dep, i);
+                var result = GetScrollViewer(child);
+                if (result != null) return result;
+            }
+            return null;
+        }
+
+        private void DisplayMessage(string showName, string message, bool isSentFromServer)
+        {
+            if (currentClient == null) return;
+            AddMessage(currentClient, showName, message, isSentFromServer);
+        }
+
+        public void ClearClientLog(AOClient client)
+        {
+            if (clientLogs.ContainsKey(client))
+            {
+                clientLogs[client] = new FlowDocument();
+
+                if (client == currentClient)
+                {
+                    LogBox.Document = clientLogs[client];
+                }
+            }
+        }
+
+        public void ClearAllLogs()
+        {
+            clientLogs.Clear();
+            LogBox.Document = new FlowDocument();
+        }
+
+        public void ScrollToBottom()
+        {
+            if (ScrollViewer != null)
+            {
+                ScrollViewer.Dispatcher.InvokeAsync(() => ScrollViewer.ScrollToEnd(),
+                    System.Windows.Threading.DispatcherPriority.Background);
+            }
+        }
+
+        private bool IsScrolledToBottom()
+        {
+            if (ScrollViewer == null) return true;
+            return ScrollViewer.VerticalOffset >= ScrollViewer.ScrollableHeight - 10; // 10px tolerance
         }
 
         private void txtOOCMessage_TextChanged(object sender, TextChangedEventArgs e)
@@ -80,12 +158,20 @@ namespace OceanyaClient.Components
         {
             if (e.Key == Key.Enter)
             {
-                if(txtOOCShowname.Text == "")
+                e.Handled = true;
+
+                if (string.IsNullOrWhiteSpace(txtOOCShowname.Text))
                 {
-                    AddMessage("Oceanya Client", "You must set a showname before sending a message!", true);
+                    AddMessage(currentClient, "Oceanya Client", "You must set a showname before sending a message!", true);
                     return;
                 }
-                e.Handled = true; // Prevents the beep sound from default Enter behavior
+
+                if (currentClient == null)
+                {
+                    AddMessage(currentClient, "Oceanya Client", "No client selected. Please select a client first.", true);
+                    return;
+                }
+
                 string message = txtOOCMessage.Text;
                 txtOOCMessage.Clear();
                 OnSendOOCMessage?.Invoke(txtOOCShowname.Text, message);

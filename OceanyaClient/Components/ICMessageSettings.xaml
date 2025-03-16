@@ -5,15 +5,23 @@
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              xmlns:local="clr-namespace:OceanyaClient.Components"
              xmlns:components="clr-namespace:OceanyaClient.Components"
-             mc:Ignorable="d" Height="520" Width="528" Background="#FF585858">
+             mc:Ignorable="d" Height="288" Width="528" Background="#FF585858">
     <Canvas>
-        <Rectangle Height="115" Canvas.Top="22" Width="452" Fill="#FF464646" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="29">
+        <Rectangle Height="115" Canvas.Top="10" Width="452" Fill="#FF464646" HorizontalAlignment="Center" VerticalAlignment="Top" Canvas.Left="33">
             <Rectangle.OpacityMask>
                 <ImageBrush ImageSource="pack://application:,,,/OceanyaClient;component/Resources/OceanyaFullLogo.png" Stretch="UniformToFill"/>
             </Rectangle.OpacityMask>
         </Rectangle>
-        <Rectangle x:Name="bgSettings" Height="153" Canvas.Top="137" Width="505" Fill="#FF4E5056" HorizontalAlignment="Center" VerticalAlignment="Top"/>
-        <Grid x:Name="Showname" Canvas.Top="0" Canvas.Left="0" Width="78" Height="17">
+        <Label x:Name="lblCatchphrase" Content="&quot;Here to bring you the best, because you're definitely not it.&quot;" Height="34" Width="505" 
+            FontFamily="Javanese Text" Foreground="#FF464646" 
+            Canvas.Left="4" Canvas.Top="103" HorizontalAlignment="Center" VerticalAlignment="Top" Background="{x:Null}" VerticalContentAlignment="Center" HorizontalContentAlignment="Center" FontSize="16" FontWeight="Bold"/>
+        <Rectangle x:Name="bgSettings" Height="123" Canvas.Top="137" Width="528" Fill="#FF4E5056" VerticalAlignment="Center"/>
+        <Rectangle x:Name="imgLoremaster" Height="118" Canvas.Left="332" Canvas.Top="143" Width="195" HorizontalAlignment="Left" VerticalAlignment="Center">
+            <Rectangle.Fill>
+                <ImageBrush ImageSource="pack://application:,,,/OceanyaClient;component/Resources/LoremasterObjection.png" Stretch="Uniform"/>
+            </Rectangle.Fill>
+        </Rectangle>
+        <Grid x:Name="Showname" Canvas.Top="0" Canvas.Left="4" Width="78" Height="17" HorizontalAlignment="Left" VerticalAlignment="Center">
             <!-- Actual TextBox -->
             <TextBox x:Name="txtICShowname" TextWrapping="Wrap"
                     Width="78" Height="17"
@@ -32,7 +40,7 @@
                       FontFamily="pack://application:,,,/Resources/Fonts/#Igiari Cyrillic"
                       IsHitTestVisible="False"/>
         </Grid>
-        <Grid x:Name="Message" Canvas.Top="0" Canvas.Left="83" Width="422" Height="17" HorizontalAlignment="Left" VerticalAlignment="Center">
+        <Grid x:Name="Message" Canvas.Top="0" Canvas.Left="87" Width="422" Height="17" HorizontalAlignment="Left" VerticalAlignment="Center">
             <!-- Actual TextBox -->
             <TextBox x:Name="txtICMessage" TextWrapping="Wrap"
                     Width="422" Height="17"
@@ -54,19 +62,19 @@
                       IsHitTestVisible="False"/>
         </Grid>
 
-        <components:PageButtonGrid x:Name="EmoteGrid" Canvas.Top="17" BorderBrush="#FF545454" BorderThickness="1,1,1,1" Width="505" Height="120" HorizontalAlignment="Center" VerticalAlignment="Top"/>
-        <CheckBox x:Name="chkPreanim" Content="Preanim" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="58" Height="16" BorderBrush="Black" Checked="chkPreanim_Checked" Unchecked="chkPreanim_Checked" Focusable="False" IsTabStop="False"/>
-        <CheckBox x:Name="chkFlip" Content="Flip" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="37" Height="16" BorderBrush="Black" Checked="chkFlip_Checked" Unchecked="chkFlip_Checked" Canvas.Left="63" Focusable="False" IsTabStop="False"/>
-        <CheckBox x:Name="chkAdditive" Content="Additive" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="56" Height="16" BorderBrush="Black" Checked="chkAdditive_Checked" Unchecked="chkAdditive_Checked" Canvas.Left="105" Focusable="False" IsTabStop="False"/>
-        <CheckBox x:Name="chkImmediate" Content="Immediate" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top" Width="73" Height="16" BorderBrush="Black" Checked="chkImmediate_Checked" Unchecked="chkImmediate_Checked" Canvas.Left="166" Focusable="False" IsTabStop="False"/>
-        <components:ImageComboBox x:Name="CharacterDropdown" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Top="142" Width="156"/>
-        <components:ImageComboBox x:Name="EmoteDropdown" Canvas.Top="142" Width="156" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="161"/>
-        <components:ImageComboBox x:Name="PositionDropdown" Canvas.Top="142" Width="156" Canvas.Left="322" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-        <components:ImageComboBox x:Name="TextColorDropdown" Canvas.Top="168" Width="156" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-        <components:ImageComboBox x:Name="EffectDropdown" Canvas.Top="168" Width="156" Canvas.Left="161" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-        <components:ImageComboBox x:Name="sfxDropdown" Canvas.Top="168" Width="156" Canvas.Left="322" HorizontalAlignment="Left" VerticalAlignment="Center"/>
-        <ToggleButton x:Name="btnRealization" Height="42" Width="42" Canvas.Left="8" Canvas.Top="215" 
-                        BorderBrush="{x:Null}" Padding="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Top"
+        <components:PageButtonGrid x:Name="EmoteGrid" Canvas.Top="17" BorderBrush="#FF545454" BorderThickness="1,1,1,1" Width="505" Height="120" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="4"/>
+        <CheckBox x:Name="chkPreanim" Content="Preanim" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Left" VerticalAlignment="Center" Width="58" Height="16" BorderBrush="Black" Checked="chkPreanim_Checked" Unchecked="chkPreanim_Checked" Focusable="False" IsTabStop="False" Canvas.Left="4"/>
+        <CheckBox x:Name="chkFlip" Content="Flip" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Left" VerticalAlignment="Center" Width="37" Height="16" BorderBrush="Black" Checked="chkFlip_Checked" Unchecked="chkFlip_Checked" Canvas.Left="67" Focusable="False" IsTabStop="False"/>
+        <CheckBox x:Name="chkAdditive" Content="Additive" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Left" VerticalAlignment="Center" Width="56" Height="16" BorderBrush="Black" Checked="chkAdditive_Checked" Unchecked="chkAdditive_Checked" Canvas.Left="109" Focusable="False" IsTabStop="False"/>
+        <CheckBox x:Name="chkImmediate" Content="Immediate" Canvas.Top="194" Foreground="White" FontFamily="Arial" FontSize="10" VerticalContentAlignment="Center" HorizontalAlignment="Left" VerticalAlignment="Center" Width="73" Height="16" BorderBrush="Black" Checked="chkImmediate_Checked" Unchecked="chkImmediate_Checked" Canvas.Left="170" Focusable="False" IsTabStop="False"/>
+        <components:ImageComboBox x:Name="CharacterDropdown"                    Width="140" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Top="142"  Canvas.Left="4"/>
+        <components:ImageComboBox x:Name="EmoteDropdown" Canvas.Top="142"       Width="140" HorizontalAlignment="Center" VerticalAlignment="Top" Canvas.Left="149"/>
+        <components:ImageComboBox x:Name="PositionDropdown" Canvas.Top="142"    Width="140" Canvas.Left="294" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+        <components:ImageComboBox x:Name="TextColorDropdown" Canvas.Top="168"   Width="140" HorizontalAlignment="Left" VerticalAlignment="Center" Canvas.Left="4"/>
+        <components:ImageComboBox x:Name="EffectDropdown" Canvas.Top="168"      Width="140" Canvas.Left="149" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+        <components:ImageComboBox x:Name="sfxDropdown" Canvas.Top="168"         Width="140" Canvas.Left="294" HorizontalAlignment="Left" VerticalAlignment="Top"/>
+        <ToggleButton x:Name="btnRealization" Height="42" Width="42" Canvas.Left="12" Canvas.Top="215" 
+                        BorderBrush="{x:Null}" Padding="0,0,0,0" HorizontalAlignment="Left" VerticalAlignment="Center"
                         Checked="btnRealization_Checked" Unchecked="btnRealization_Unchecked"
                         Focusable="False" IsTabStop="False">
             <ToggleButton.Style>
@@ -88,9 +96,9 @@
                 </Style>
             </ToggleButton.Style>
         </ToggleButton>
-        <ToggleButton x:Name="btnScreenshake" Height="42" Width="42" Canvas.Left="55" Canvas.Top="215" 
+        <ToggleButton x:Name="btnScreenshake" Height="42" Width="42" Canvas.Left="59" Canvas.Top="215" 
             BorderBrush="{x:Null}" Padding="0,0,0,0"
-            Checked="btnScreenshake_Checked" Unchecked="btnScreenshake_Unchecked" HorizontalAlignment="Left" VerticalAlignment="Top"
+            Checked="btnScreenshake_Checked" Unchecked="btnScreenshake_Unchecked" HorizontalAlignment="Left" VerticalAlignment="Center"
             Focusable="False" IsTabStop="False">
             <ToggleButton.Style>
                 <Style TargetType="{x:Type ToggleButton}">

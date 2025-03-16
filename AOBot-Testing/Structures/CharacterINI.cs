@@ -6,7 +6,7 @@ namespace AOBot_Testing.Structures
     public class CharacterINI
     {
         #region Static methods
-        public static string characterFolder { get => Path.Combine(Globals.BaseFolder, "characters"); }
+        public static List<string> CharacterFolders => Globals.BaseFolders.Select(x => Path.Combine(x, "characters")).ToList();
         static string cacheFile = Path.Combine(Path.GetTempPath(), "characters.json");
         static List<CharacterINI> characterConfigs = new List<CharacterINI>();
         public static List<CharacterINI> FullList
@@ -31,20 +31,30 @@ namespace AOBot_Testing.Structures
             }
         }
 
-        public static void RefreshCharacterList()
+        public static void RefreshCharacterList(Action<CharacterINI> onParsedCharacter = null, Action<string> onChangedMountPath = null)
         {
             characterConfigs = new List<CharacterINI>();
-            var directories = Directory.GetDirectories(characterFolder);
 
-            foreach (var directory in directories)
+            foreach (var CharacterFolder in CharacterFolders)
             {
-                var iniFilePath = Path.Combine(directory, "char.ini");
-                if (File.Exists(iniFilePath))
+                onChangedMountPath?.Invoke(CharacterFolder);
+                var directories = Directory.GetDirectories(CharacterFolder);
+
+                foreach (var directory in directories)
                 {
-                    var config = CharacterINI.Parse(iniFilePath);
-                    CustomConsole.WriteLine("Parsed Character: " + config.Name);
-                    characterConfigs.Add(config);
+                    var iniFilePath = Path.Combine(directory, "char.ini");
+                    if (File.Exists(iniFilePath))
+                    {
+                        var config = CharacterINI.Parse(iniFilePath);
+                        if(!characterConfigs.Any(x => x.Name == config.Name))
+                        {
+                            CustomConsole.WriteLine("Parsed Character: " + config.Name + $" ({CharacterFolder})");
+                            characterConfigs.Add(config);
+                            onParsedCharacter?.Invoke(config);
+                        }
+                    }
                 }
+
             }
 
             // Save to JSON file for fast future loading
@@ -116,18 +126,9 @@ namespace AOBot_Testing.Structures
                         else if (int.TryParse(key, out int emotionId))
                         {
                             if (!config.Emotions.ContainsKey(emotionId))
-                                config.Emotions[emotionId] = new Emote();
+                                config.Emotions[emotionId] = new Emote(emotionId);
                             config.Emotions[emotionId] = Emote.ParseEmoteLine(value);
                             config.Emotions[emotionId].ID = emotionId;
-
-                            if (Emote.trigger)
-                            {
-                                Emote.trigger = false;
-                                if (!Emote.charInisWithMoreThan5PartsInEmotes.Contains(filePath))
-                                {
-                                    Emote.charInisWithMoreThan5PartsInEmotes.Add(filePath);
-                                }
-                            }
                         }
                         break;
 
@@ -135,8 +136,8 @@ namespace AOBot_Testing.Structures
                         if (int.TryParse(key, out int soundId))
                         {
                             if (!config.Emotions.ContainsKey(soundId))
-                                config.Emotions[soundId] = new Emote();
-                            config.Emotions[soundId].sfxName = value;
+                                config.Emotions[soundId] = new Emote(soundId);
+                            config.Emotions[soundId].sfxName = string.IsNullOrEmpty(value) ? "1" : value;
                         }
                         break;
 
@@ -144,7 +145,7 @@ namespace AOBot_Testing.Structures
                         if (int.TryParse(key, out int soundTimeId) && int.TryParse(value, out int timeValue))
                         {
                             if (!config.Emotions.ContainsKey(soundTimeId))
-                                config.Emotions[soundTimeId] = new Emote();
+                                config.Emotions[soundTimeId] = new Emote(soundTimeId);
                             config.Emotions[soundTimeId].sfxDelay = timeValue;
                         }
                         break;
@@ -196,6 +197,20 @@ namespace AOBot_Testing.Structures
                 }
             }
             #endregion
+
+            if(config.EmotionsCount != config.Emotions.Count)
+            {
+                for (int i = 1; i <= config.EmotionsCount; i++)
+                {
+                    if (!config.Emotions.ContainsKey(i))
+                    {
+                        //add an empty emote, since this is how the AO client works.
+                        config.Emotions.Add(i, new Emote(i));
+                    }
+                }
+
+                config.Emotions = config.Emotions.Take(config.EmotionsCount).ToDictionary(x => x.Key, x => x.Value);
+            }
 
             return config;
         }

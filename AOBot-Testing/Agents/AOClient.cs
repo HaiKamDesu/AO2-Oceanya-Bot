@@ -9,7 +9,7 @@ using Common;
 
 namespace AOBot_Testing.Agents
 {
-    public partial class AOBot(string serverAddress, string location)
+    public partial class AOClient(string serverAddress, string location)
     {
         private const int textCrawlSpeed = 35;
         private readonly Uri serverUri = new Uri(serverAddress);
@@ -53,6 +53,7 @@ namespace AOBot_Testing.Agents
         public bool Immediate = false;
         public bool Additive = false;
         public (int Horizontal, int Vertical) SelfOffset;
+        public bool switchPosWhenChangingINI = false;
 
         private CharacterINI CurrentINI
         {
@@ -77,7 +78,8 @@ namespace AOBot_Testing.Agents
         public Action<CharacterINI> OnChangedCharacter;
         public Action<string> OnBGChange;
         public Action<string> OnSideChange;
-
+        public Action OnReconnect;
+        public Action OnDisconnect;
 
         #region Send Message Methods
         public async Task SendICMessage(string showname, string message)
@@ -220,13 +222,21 @@ namespace AOBot_Testing.Agents
         public void SetCharacter(CharacterINI character)
         {
             CurrentINI = character;
-            if (string.IsNullOrEmpty(curPos))
+            if (switchPosWhenChangingINI || string.IsNullOrEmpty(curPos))
             {
-                curPos = character.Side;
+                SetPos(character.Side);
             }
 
 
             OnChangedCharacter?.Invoke(character);
+        }
+        public void SetPos(string newPos, bool callEvent = true)
+        {
+            curPos = newPos;
+            if (callEvent)
+            {
+                OnSideChange?.Invoke(newPos);
+            }
         }
         public void SetICShowname(string newShowname)
         {
@@ -235,6 +245,9 @@ namespace AOBot_Testing.Agents
         public void SetEmote(string emoteDisplayID)
         {
             currentEmote = CurrentINI.Emotions.Values.First(e => e.DisplayID == emoteDisplayID);
+
+            deskMod = currentEmote.DeskMod;
+            emoteMod = currentEmote.Modifier;
         }
         #endregion
 
@@ -310,8 +323,7 @@ namespace AOBot_Testing.Agents
                 var fields = message.Split("#");
                 var newPos = fields[1];
 
-                curPos = newPos;
-                OnSideChange?.Invoke(newPos);
+                SetPos(newPos);
             }
             else if (message.StartsWith("BN#"))
             {
@@ -348,7 +360,7 @@ namespace AOBot_Testing.Agents
 
                 //Allow some time for server to update area info
 
-                await Task.Delay(1000);
+                await Task.Delay(3000);
 
                 await SelectFirstAvailableINIPuppet();
                 CustomConsole.WriteLine("===========================");
@@ -446,6 +458,7 @@ namespace AOBot_Testing.Agents
                 await Task.Delay(2000); // Wait before retrying
             }
             CustomConsole.WriteLine("Failed to reconnect after multiple attempts.");
+            await Disconnect();
         }
         private async Task KeepAlive()
         {
@@ -466,6 +479,19 @@ namespace AOBot_Testing.Agents
                 ws.Dispose();
                 ws = null;
                 CustomConsole.WriteLine("Disconnected from WebSocket.");
+                OnDisconnect?.Invoke();
+            }
+            else
+            {
+                CustomConsole.WriteLine("WebSocket is not connected.");
+            }
+        }
+
+        public async Task SimulateInternetConnectionIssue()
+        {
+            if (ws != null && ws.State == WebSocketState.Open)
+            {
+                await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnecting", CancellationToken.None);
             }
             else
             {
@@ -575,9 +601,60 @@ namespace AOBot_Testing.Agents
                     {
                         CustomConsole.WriteLine("WebSocket connection lost. Attempting to reconnect...");
                         CustomConsole.WriteLine("===========================");
+
+                        #region Save the state before reconnecting
+                        var prevIni = currentINI;
+                        var prevEmote = currentEmote;
+                        var prevBool = switchPosWhenChangingINI;
+                        var prevICShowname = ICShowname;
+                        var prevOOCShowname = OOCShowname;
+                        var prevCurPos = curPos;
+                        var prevCurBG = curBG;
+                        var prevDeskMod = deskMod;
+                        var prevEmoteMod = emoteMod;
+                        var prevShoutModifiers = shoutModifiers;
+                        var prevFlip = flip;
+                        var prevEffect = effect;
+                        var prevScreenshake = screenshake;
+                        var prevTextColor = textColor;
+                        var prevImmediate = Immediate;
+                        var prevAdditive = Additive;
+                        var prevSelfOffset = SelfOffset;
+                        var prevSelectedCharacterIndex = selectedCharacterIndex;
+                        #endregion
+
                         await Reconnect();
+
+                        if (!dead)
+                        {
+                            #region Reapply the previous state
+                            SetICShowname(prevICShowname);
+                            OOCShowname = prevOOCShowname;
+                            deskMod = prevDeskMod;
+                            emoteMod = prevEmoteMod;
+                            shoutModifiers = prevShoutModifiers;
+                            flip = prevFlip;
+                            effect = prevEffect;
+                            screenshake = prevScreenshake;
+                            textColor = prevTextColor;
+                            Immediate = prevImmediate;
+                            Additive = prevAdditive;
+                            SelfOffset = prevSelfOffset;
+
+                            SetCharacter(prevIni);
+                            SetEmote(prevEmote.DisplayID);
+                            SetPos(prevCurPos);
+                            CustomConsole.WriteLine("State reapplied after reconnecting.");
+                            OnReconnect?.Invoke();
+
+                            #endregion
+                        }
+
+
+
                         CustomConsole.WriteLine("===========================");
                     }
+
                 }
             }
         }

@@ -10,7 +10,7 @@ namespace AOBot_Testing.Structures
 {
     public class Background
     {
-        public static string BackgroundFolder = Path.Combine(Globals.BaseFolder, "background");
+        public static List<string> BackgroundFolders => Globals.BaseFolders.Select(x => Path.Combine(x, "background")).ToList();
         public static Dictionary<string, string> posToBGName = new Dictionary<string, string>()
         {
             {"def","defenseempty"},
@@ -30,52 +30,53 @@ namespace AOBot_Testing.Structures
 
         public static Background FromBGPath(string curBG)
         {
-            var bgFolder = Path.Combine(BackgroundFolder, curBG);
-
-            if (Directory.Exists(bgFolder))
+            foreach (var BackgroundFolder in BackgroundFolders)
             {
-                var newBG = new Background();
-                newBG.Name = Path.GetDirectoryName(bgFolder);
-                newBG.PathToFile = bgFolder;
+                var bgFolder = Path.Combine(BackgroundFolder, curBG);
 
-                var bgFiles = Directory.GetFiles(bgFolder, "*.*", SearchOption.TopDirectoryOnly);
-
-                var extensions = new List<string>() { "png", "jpg", "jpeg" };
-                var exclude = new List<string>() { "defensedesk", "prosecutiondesk", "stand", "judgedesk" };
-
-                List<string> bgFilesFiltered = new();
-
-                foreach (var file in bgFiles)
+                if (Directory.Exists(bgFolder))
                 {
-                    var fileExtension = Path.GetExtension(file).TrimStart('.').ToLower();
-                    if (extensions.Contains(fileExtension) && !exclude.Any(ex => Path.GetFileNameWithoutExtension(file).ToLower() == ex))
+                    var newBG = new Background();
+                    newBG.Name = Path.GetDirectoryName(bgFolder);
+                    newBG.PathToFile = bgFolder;
+
+                    var bgFiles = Directory.GetFiles(bgFolder, "*.*", SearchOption.TopDirectoryOnly);
+
+                    var extensions = new List<string>() { "png", "jpg", "jpeg" };
+                    var exclude = new List<string>() { "defensedesk", "prosecutiondesk", "stand", "judgedesk" };
+
+                    List<string> bgFilesFiltered = new();
+
+                    foreach (var file in bgFiles)
                     {
-                        var existingFile = bgFilesFiltered.FirstOrDefault(f => Path.GetFileNameWithoutExtension(f) == Path.GetFileNameWithoutExtension(file));
-                        if (existingFile != null)
+                        var fileExtension = Path.GetExtension(file).TrimStart('.').ToLower();
+                        if (extensions.Contains(fileExtension) && !exclude.Any(ex => Path.GetFileNameWithoutExtension(file).ToLower() == ex))
                         {
-                            var existingFileExtension = Path.GetExtension(existingFile).TrimStart('.').ToLower();
-                            if (extensions.IndexOf(fileExtension) < extensions.IndexOf(existingFileExtension))
+                            var existingFile = bgFilesFiltered.FirstOrDefault(f => Path.GetFileNameWithoutExtension(f) == Path.GetFileNameWithoutExtension(file));
+                            if (existingFile != null)
                             {
-                                bgFilesFiltered.Remove(existingFile);
+                                var existingFileExtension = Path.GetExtension(existingFile).TrimStart('.').ToLower();
+                                if (extensions.IndexOf(fileExtension) < extensions.IndexOf(existingFileExtension))
+                                {
+                                    bgFilesFiltered.Remove(existingFile);
+                                    bgFilesFiltered.Add(file);
+                                }
+                            }
+                            else
+                            {
                                 bgFilesFiltered.Add(file);
                             }
                         }
-                        else
-                        {
-                            bgFilesFiltered.Add(file);
-                        }
                     }
+
+                    newBG.bgImages = bgFilesFiltered;
+
+
+                    return newBG;
                 }
-
-                newBG.bgImages = bgFilesFiltered;
-
-
-                return newBG;
             }
-            else
-            {
-                return null;
-            }
+            
+            return null;
         }
 
         public string GetBGImage(string pos)

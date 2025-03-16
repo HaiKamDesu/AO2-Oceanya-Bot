@@ -1,8 +1,7 @@
 ﻿<Application x:Class="OceanyaClient.App"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             xmlns:local="clr-namespace:OceanyaClient"
-             StartupUri="InitialConfigurationWindow.xaml">
+             xmlns:local="clr-namespace:OceanyaClient">
     <Application.Resources>
         <ResourceDictionary>
             <ResourceDictionary.MergedDictionaries>

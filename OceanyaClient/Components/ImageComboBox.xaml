@@ -58,15 +58,15 @@
 
                                 <!-- Editable TextBox inside ComboBox -->
                                 <TextBox x:Name="PART_EditableTextBox"
-                             Grid.Column="1"
-                             Background="{TemplateBinding Background}" 
-                             Foreground="Black"
-                             BorderThickness="0"
-                             VerticalContentAlignment="Center"
-                             MaxWidth="{Binding ActualWidth, ElementName=Border, Converter={StaticResource WidthAdjustConverter}}"
-                             TextWrapping="NoWrap"
-                                         PreviewMouseDown="EditableTextBox_PreviewMouseDown"
-                                         PreviewGotKeyboardFocus="EditableTextBox_PreviewGotKeyboardFocus"/>
+                                        Grid.Column="1"
+                                        Background="{TemplateBinding Background}" 
+                                        Foreground="Black"
+                                        BorderThickness="0"
+                                        VerticalContentAlignment="Center"
+                                        MaxWidth="{Binding ActualWidth, ElementName=Border, Converter={StaticResource WidthAdjustConverter}}"
+                                        TextWrapping="NoWrap"
+                                        PreviewMouseDown="EditableTextBox_PreviewMouseDown"
+                                        PreviewGotKeyboardFocus="EditableTextBox_PreviewGotKeyboardFocus"/>
 
                                 <!-- Dropdown Button (Fixed Width) -->
                                 <Border x:Name="Test" Grid.Column="2"

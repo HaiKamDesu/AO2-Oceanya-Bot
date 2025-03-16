@@ -7,7 +7,8 @@ using System.Threading.Tasks;
 
     public static class Globals
     {
-        public static string BaseFolder = "";
+        public static string PathToConfigINI = "";
+        public static List<string> BaseFolders = new List<string>();
         public static string ConnectionString = "Basement/testing";
         public enum Servers { ChillAndDices, Vanilla, CaseCafe }
         public static Dictionary<Servers, string> IPs = LoadServerIPs();
@@ -27,7 +28,7 @@ using System.Threading.Tasks;
             }
         }
 
-    public static string AI_SYSTEM_PROMPT = @"
+        public static string AI_SYSTEM_PROMPT = @"
 You are an Attorney Online (AO2) player who interacts with others based on the chatlog. 
 You decide **when to respond and when to remain silent**. If you do not wish to respond, output only: `SYSTEM_WAIT()` disregarding any and all json formats.
 
@@ -124,5 +125,47 @@ Each of these settings has predefined integer values. **If a change is requested
 
         public static bool UseOpenAIAPI = false;
         public static bool DebugMode = true;
+
+        public static List<string> GetBaseFolders(string pathToConfigINI)
+        {
+            string mountPathsRaw = "";
+            foreach (string line in File.ReadLines(pathToConfigINI))
+            {
+                if (line.StartsWith("mount_paths="))
+                {
+                    mountPathsRaw = line.Substring("mount_paths=".Length).Trim();
+                    break;
+                }
+            }
+
+            List<string> mountPaths = new List<string>() { Path.GetDirectoryName(pathToConfigINI) };
+
+            if (mountPathsRaw != "@Invalid()")
+            {
+                mountPaths.AddRange(mountPathsRaw.Split(',').Select(p => p.Trim()));
+            }
+            mountPaths.Reverse();
+
+            for (int i = 0; i < mountPaths.Count; i++)
+            {
+                var current = mountPaths[i];
+
+                if (!Directory.Exists(current))
+                {
+                    var newMountPath = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(pathToConfigINI)), current);
+
+                    if (!Directory.Exists(newMountPath))
+                    {
+                        throw new FileNotFoundException("Mount path not found: " + current);
+                    }
+                    else
+                    {
+                        mountPaths[i] = newMountPath;
+                    }
+                }
+            }
+
+            return mountPaths;
+        }
     }
 

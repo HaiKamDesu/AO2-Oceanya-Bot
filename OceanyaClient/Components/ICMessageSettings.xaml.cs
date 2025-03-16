@@ -31,7 +31,8 @@ namespace OceanyaClient.Components
     {
 
         Dictionary<Emote, ToggleButton> emotes = new();
-        AOBot curClient;
+        AOClient curClient;
+        public bool stickyEffects;
 
         public Action<string> OnSendICMessage;
 
@@ -57,15 +58,8 @@ namespace OceanyaClient.Components
 
             PositionDropdown.OnConfirm += PositionDropdown_OnConfirm;
 
-            // Temporary code to create 1x1 images of the colors from ICMessage.GetColorFromTextColor
             foreach (var color in Enum.GetValues(typeof(ICMessage.TextColors)).Cast<ICMessage.TextColors>())
             {
-                var drawingColor = ICMessage.GetColorFromTextColor(color);
-                var pixel = new byte[] { drawingColor.B, drawingColor.G, drawingColor.R, drawingColor.A }; // Corrected order to BGRA
-                var bitmapSource = BitmapSource.Create(1, 1, 96, 96, PixelFormats.Bgra32, null, pixel, 4);
-                var encoder = new PngBitmapEncoder();
-                encoder.Frames.Add(BitmapFrame.Create(bitmapSource));
-                // Ensure the directory exists before saving the file
                 var colorsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Resources", "Colors");
                 if (!Directory.Exists(colorsDirectory))
                 {
@@ -73,12 +67,6 @@ namespace OceanyaClient.Components
                 }
 
                 var filePath = Path.Combine(colorsDirectory, $"{color}.png");
-
-                using (var fileStream = new FileStream(filePath, FileMode.Create))
-                {
-                    encoder.Save(fileStream);
-                }
-
                 TextColorDropdown.Add(color.ToString(), filePath);
             }
             TextColorDropdown.OnConfirm += TextColorDropdown_OnConfirm;
@@ -94,6 +82,41 @@ namespace OceanyaClient.Components
             EffectDropdown.OnConfirm += EffectDropdown_OnConfirm;
 
             sfxDropdown.SetImageFieldVisible(false);
+        }
+
+        public void ReinitializeSettings()
+        {
+            // Reinitialize Character Dropdown
+            CharacterDropdown.Clear();
+            foreach (var ini in CharacterINI.FullList)
+            {
+                CharacterDropdown.Add(ini.Name, ini.CharIconPath);
+            }
+
+            // Reinitialize Emote Dropdown
+            EmoteDropdown.Clear();
+
+            // Reinitialize Text Color Dropdown
+            TextColorDropdown.Clear();
+            foreach (var color in Enum.GetValues(typeof(ICMessage.TextColors)).Cast<ICMessage.TextColors>())
+            {
+                var colorsDirectory = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "..", "..", "..", "Resources", "Colors");
+                if (!Directory.Exists(colorsDirectory))
+                {
+                    Directory.CreateDirectory(colorsDirectory);
+                }
+
+                var filePath = Path.Combine(colorsDirectory, $"{color}.png");
+                TextColorDropdown.Add(color.ToString(), filePath);
+            }
+
+            // Reinitialize Effect Dropdown
+            EffectDropdown.Clear();
+            foreach (var effect in Enum.GetValues(typeof(ICMessage.Effects)).Cast<ICMessage.Effects>())
+            {
+                var path = $"pack://application:,,,/Resources/Buttons/MessageEffects/{effect.ToString().ToLower()}.png";
+                EffectDropdown.Add(effect.ToString(), effect == ICMessage.Effects.None ? "" : path);
+            }
         }
 
         private void EffectDropdown_OnConfirm(object? sender, string newEffect)
@@ -128,13 +151,14 @@ namespace OceanyaClient.Components
         {
             if (curClient == null) return;
 
-            curClient.curPos = newPos;
+            curClient.SetPos(newPos);
         }
 
         private void EmoteDropdown_OnConfirm(object? sender, string emoteDisplayID)
         {
             //toggles the emote button that corresponds to the selected emote in the dropdown
             var emote = emotes.FirstOrDefault(x => x.Key.DisplayID == emoteDisplayID).Value;
+            if (emote == null) return;
             emote.IsChecked = true;
         }
 
@@ -156,7 +180,7 @@ namespace OceanyaClient.Components
             }
         }
 
-        public void SetClient(AOBot client)
+        public void SetClient(AOClient client)
         {
             if (this.curClient != null)
             {
@@ -188,7 +212,7 @@ namespace OceanyaClient.Components
             UpdatePosDropdown(this.curClient);
         }
 
-        private void UpdatePosDropdown(AOBot client)
+        private void UpdatePosDropdown(AOClient client)
         {
             PositionDropdown.Dispatcher.Invoke(() =>
             {
@@ -225,7 +249,9 @@ namespace OceanyaClient.Components
         {
             PositionDropdown.Dispatcher.Invoke(() =>
             {
+                curClient.OnSideChange -= UpdatePos;
                 PositionDropdown.SelectedText = newPos;
+                curClient.OnSideChange += UpdatePos;
             });
         }
         private void SetINI(CharacterINI ini)
@@ -299,6 +325,20 @@ namespace OceanyaClient.Components
             emotes.Add(emote, toggleBtn);
         }
 
+        public void ClearSettings()
+        {
+            ReinitializeSettings();
+            CharacterDropdown.SelectedText = string.Empty;
+            EffectDropdown.SelectedText = string.Empty;
+            EmoteDropdown.SelectedText = string.Empty;
+            PositionDropdown.SelectedText = string.Empty;
+            TextColorDropdown.SelectedText = string.Empty;
+            sfxDropdown.SelectedText = string.Empty;
+            txtICShowname.Clear();
+            txtICMessage.Clear();
+            EmoteGrid.ClearGrid();
+        }
+
         private void EmoteToggleBtn_Checked(object sender, RoutedEventArgs e)
         {
             ToggleButton clickedButton = sender as ToggleButton;
@@ -339,7 +379,22 @@ namespace OceanyaClient.Components
                 string message = txtICMessage.Text;
                 txtICMessage.Clear();
                 OnSendICMessage?.Invoke(message);
+
+                if(!stickyEffects)
+                {
+                    ResetMessageEffects();
+                }
             }
+        }
+
+        public Action OnResetMessageEffects;
+        private void ResetMessageEffects()
+        {
+            btnRealization.IsChecked = false;
+            btnScreenshake.IsChecked = false;
+            EffectDropdown.SelectedText = ICMessage.Effects.None.ToString();
+            chkPreanim.IsChecked = false;
+            sfxDropdown.SelectedText = "";
         }
 
         private void txtICShowname_TextChanged(object sender, TextChangedEventArgs e)

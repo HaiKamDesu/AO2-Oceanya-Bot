@@ -6,7 +6,6 @@
 
     <Grid>
         <DockPanel LastChildFill="True">
-            <Label x:Name="lblStream" Content="[STREAM]" Background="#7F000000" Foreground="White" FontFamily="Arial" VerticalContentAlignment="Center" DockPanel.Dock="Top" Height="24"/>
             <DockPanel x:Name="dockInputSection" DockPanel.Dock="Bottom" LastChildFill="False" Height="36">
                 <!-- OOC Message -->
                 <Grid x:Name="grdOOCMessage" Canvas.Top="30" Height="18" DockPanel.Dock="Top">
@@ -48,12 +47,11 @@
                     <Button x:Name="btnServerConsole" Content="Server Console" FontSize="10" FontFamily="pack://application:,,,/Resources/Fonts/#Igiari Cyrillic" DockPanel.Dock="Right"/>
                 </DockPanel>
             </DockPanel>
-            <ScrollViewer x:Name="ScrollViewer"
-              VerticalScrollBarVisibility="Auto" 
-              HorizontalScrollBarVisibility="Disabled">
+
+            <!-- This Grid will automatically fill the remaining space -->
+            <Grid>
                 <RichTextBox x:Name="LogBox"
                  IsReadOnly="True"
-                 VerticalAlignment="Stretch"
                  VerticalScrollBarVisibility="Auto"
                  BorderThickness="0"
                  Background="{x:Null}"
@@ -66,8 +64,14 @@
                         <Paragraph TextAlignment="Left"/>
                     </FlowDocument>
                 </RichTextBox>
-            </ScrollViewer>
+
+                <Label x:Name="lblStream" Content="[STREAM]" 
+           Background="#7F000000" Foreground="White" 
+           FontFamily="Arial" VerticalContentAlignment="Center" 
+           Height="24" VerticalAlignment="Top"
+           HorizontalAlignment="Stretch"/>
+            </Grid>
+
         </DockPanel>
     </Grid>
-
 </UserControl>

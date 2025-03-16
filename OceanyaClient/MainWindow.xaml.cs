@@ -1,5 +1,6 @@
 ﻿using System;
 using System.IO;
+using System.Security.Policy;
 using System.Text.Json;
 using System.Windows;
 using System.Windows.Controls;
@@ -8,24 +9,30 @@ using System.Windows.Input;
 using System.Windows.Media;
 using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
+using System.Windows.Resources;
 using AOBot_Testing.Agents;
 using AOBot_Testing.Structures;
 using Common;
+using NAudio.Wave;
 using OceanyaClient.Components;
+using OceanyaClient.Utilities;
 using ToggleButton = System.Windows.Controls.Primitives.ToggleButton;
 
 namespace OceanyaClient
 {
     public partial class MainWindow : Window
     {
-        Dictionary<ToggleButton, AOBot> clients = new Dictionary<ToggleButton, AOBot>();
-        AOBot currentClient;
-
+        Dictionary<ToggleButton, AOClient> clients = new Dictionary<ToggleButton, AOClient>();
+        AOClient currentClient;
+        private bool debug = true;
 
         List<ToggleButton> objectionModifiers;
         public MainWindow()
         {
+            AudioPlayer.PlayEmbeddedSound("Resources/ApertureScienceJingleHD.mp3", 0.5f);
+
             InitializeComponent();
+            WindowHelper.AddWindow(this);
 
             objectionModifiers = new List<ToggleButton> { HoldIt, Objection, TakeThat, Custom };
             // Set grid mode and size
@@ -37,6 +44,8 @@ namespace OceanyaClient
 
             OOCLogControl.OnSendOOCMessage += async (showName, message) =>
             {
+                SaveFile.Data.OOCName = showName;
+                SaveFile.Save();
                 await currentClient.SendOOCMessage(showName, message);
             };
 
@@ -44,7 +53,7 @@ namespace OceanyaClient
             {
                 // Split the message to get the client name and the actual message
                 var splitMessage = message.Split(new[] { ':' }, 2);
-                AOBot client = null;
+                AOClient client = null;
                 var sendMessage = message;
                 if (splitMessage.Length == 2)
                 {
@@ -100,8 +109,42 @@ namespace OceanyaClient
 
                 await client.SendICMessage(sendMessage);
             };
-        }
 
+            ICMessageSettingsControl.OnResetMessageEffects += () =>
+            {
+                HoldIt.IsChecked = false;
+                Objection.IsChecked = false;
+                TakeThat.IsChecked = false;
+                Custom.IsChecked = false;
+            };
+
+            OOCLogControl.txtOOCShowname.Text = SaveFile.Data.OOCName;
+            chkPosOnIniSwap.IsChecked = SaveFile.Data.SwitchPosOnIniSwap;
+            chkSticky.IsChecked = SaveFile.Data.StickyEffect;
+            chkInvertLog.IsChecked = SaveFile.Data.InvertICLog;
+
+            btnDebug.Visibility = debug ? Visibility.Visible : Visibility.Collapsed;
+        }
+        private void RenameClient(AOClient bot)
+        {
+            // Show an input dialog to the user
+            string newClientName = InputDialog.Show("Enter new Client name:", "New Client Name", bot.clientName); ;
+
+            if (!string.IsNullOrWhiteSpace(newClientName))
+            {
+                bot.clientName = newClientName;
+                UpdateClientTooltip(bot);
+
+                if (bot == currentClient)
+                {
+                    OOCLogControl.UpdateStreamLabel(bot);
+                }
+            }
+        }
+        private void UpdateClientTooltip(AOClient bot)
+        {
+            clients.Where(x => x.Value == bot).FirstOrDefault().Key.ToolTip = $"\"{bot.clientName}\" (AO ID: {bot.playerID})";
+        }
         private void AddClient(string clientName)
         {
             AddClientAsync(clientName);
@@ -113,48 +156,56 @@ namespace OceanyaClient
 
             try
             {
-                AOBot bot = new AOBot(Globals.IPs[Globals.Servers.ChillAndDices], Globals.ConnectionString);
+                AOClient bot = new AOClient(Globals.IPs[Globals.Servers.ChillAndDices], Globals.ConnectionString);
                 bot.clientName = clientName;
                 if (clients.Count == 0)
                 {
                     OOCLogControl.IsEnabled = true;
                     ICLogControl.IsEnabled = true;
                     ICMessageSettingsControl.IsEnabled = true;
-
-                    bot.OnICMessageReceived += (ICMessage icMessage) =>
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            ICLogControl.AddMessage(icMessage.ShowName,
-                                icMessage.Message,
-                                icMessage.CharId == bot.selectedCharacterIndex);
-                        });
-                    };
-
-                    bot.OnOOCMessageReceived += (string showName, string message, bool isFromServer) =>
-                    {
-                        Dispatcher.Invoke(() =>
-                        {
-                            OOCLogControl.AddMessage(showName, message, isFromServer);
-                        });
-                    };
                 }
+
+                bot.OnICMessageReceived += (ICMessage icMessage) =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        ICLogControl.AddMessage(bot, icMessage.ShowName,
+                            icMessage.Message,
+                            icMessage.CharId == bot.selectedCharacterIndex, icMessage.TextColor);
+                    });
+                };
+
+                bot.OnOOCMessageReceived += (string showName, string message, bool isFromServer) =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        OOCLogControl.AddMessage(bot, showName, message, isFromServer);
+                    });
+                };
 
                 await bot.Connect();
 
                 bot.SetICShowname(clientName);
                 bot.OOCShowname = clientName;
+                bot.switchPosWhenChangingINI = chkPosOnIniSwap.IsChecked.Value;
 
                 ToggleButton toggleBtn = new ToggleButton
                 {
                     Width = 40,
-                    Height = 40,
-                    ToolTip = $"\"{clientName}\" (AO ID: {bot.playerID})"
+                    Height = 40
                 };
-
+                
                 toggleBtn.Checked += ClientToggleButton_Checked;
                 toggleBtn.Unchecked += ClientToggleButton_Unchecked;
 
+                #region Create Context Menu
+                ContextMenu contextMenu = new ContextMenu();
+                MenuItem renameMenuItem = new MenuItem { Header = "Rename Client" };
+                renameMenuItem.Click += (sender, args) => RenameClient(bot);
+
+                contextMenu.Items.Add(renameMenuItem);
+                toggleBtn.ContextMenu = contextMenu;
+                #endregion
                 // Subscribe to OnChangedCharacter event
                 bot.OnChangedCharacter += (CharacterINI newCharacter) =>
                 {
@@ -250,7 +301,47 @@ namespace OceanyaClient
                         }
                     });
                 };
+                bot.OnReconnect += () =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        UpdateClientTooltip(bot);
+                        ICLogControl.AddMessage(bot, "Oceanya Client", "Reconnected to server.", true, ICMessage.TextColors.Green);
+                        OOCLogControl.AddMessage(bot, "Oceanya Client", "Reconnected to server.", true);
+                    });
+                };
+                bot.OnDisconnect += () =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        var button = clients.FirstOrDefault(x => x.Value == bot).Key;
 
+                        clients.Remove(button);
+                        EmoteGrid.DeleteElement(button);
+
+                        OceanyaMessageBox.Show($"Client {bot.clientName} has disconnected.", "Client Disconnected", MessageBoxButton.OK, MessageBoxImage.Information);
+
+                        if(clients.Count == 0)
+                        {
+                            //Clear the form entirely.
+                            ICMessageSettingsControl.ClearSettings();
+                            OOCLogControl.ClearAllLogs();
+                            ICLogControl.ClearAllLogs();
+                            OOCLogControl.IsEnabled = false;
+                            ICLogControl.IsEnabled = false;
+                            ICMessageSettingsControl.IsEnabled = false;
+                        }
+                        else
+                        {
+                            var newClient = clients.Values.FirstOrDefault();
+                            if (newClient != null)
+                            {
+                                SelectClient(newClient);
+                            }
+                        }
+                            
+                    });
+                };
                 bot.SetCharacter(bot.currentINI);
 
                 toggleBtn.Focusable = false;
@@ -261,11 +352,11 @@ namespace OceanyaClient
                 EmoteGrid.AddElement(toggleBtn);
 
                 toggleBtn.IsChecked = true;
-
+                UpdateClientTooltip(bot);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error connecting client: {ex.Message}", "Connection Failed", MessageBoxButton.OK, MessageBoxImage.Error);
+                OceanyaMessageBox.Show($"Error connecting client: {ex.Message}", "Connection Failed", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
             {
@@ -275,7 +366,7 @@ namespace OceanyaClient
             IsEnabled = true;
         }
 
-        private void SelectClient(AOBot client)
+        private void SelectClient(AOClient client)
         {
             foreach (var button in clients.Keys)
             {
@@ -288,12 +379,14 @@ namespace OceanyaClient
 
             currentClient = client;
             ICMessageSettingsControl.SetClient(currentClient);
+            OOCLogControl.SetCurrentClient(currentClient);
+            ICLogControl.SetCurrentClient(currentClient);
         }
 
         private async void ConnectButton_Click(object sender, RoutedEventArgs e)
         {
             #region Create the bot and connect to the server
-            AOBot bot = new AOBot(Globals.IPs[Globals.Servers.ChillAndDices], "Basement/testing");
+            AOClient bot = new AOClient(Globals.IPs[Globals.Servers.ChillAndDices], "Basement/testing");
             await bot.Connect();
             #endregion
 
@@ -360,7 +453,7 @@ namespace OceanyaClient
             await Task.Delay(-1);
         }
 
-        private static async Task<bool> ValidateJsonResponse(AOBot bot, string response)
+        private static async Task<bool> ValidateJsonResponse(AOClient bot, string response)
         {
             bool success = false;
 
@@ -517,7 +610,7 @@ namespace OceanyaClient
             return success;
         }
 
-        private  void btnAddClient_Click(object sender, RoutedEventArgs e)
+        private void btnAddClient_Click(object sender, RoutedEventArgs e)
         {
             // Show an input dialog to the user
             string newClientName = ShowInputDialog("Enter client name:");
@@ -528,31 +621,9 @@ namespace OceanyaClient
             }
         }
 
-        // Helper method to show an input dialog
         private string ShowInputDialog(string prompt)
         {
-            Window inputDialog = new Window
-            {
-                Width = 300,
-                Height = 150,
-                WindowStartupLocation = WindowStartupLocation.CenterScreen,
-                Title = "Client Name",
-                ResizeMode = ResizeMode.NoResize
-            };
-
-            StackPanel panel = new StackPanel { Margin = new Thickness(10) };
-            TextBlock textBlock = new TextBlock { Text = prompt, Margin = new Thickness(0, 0, 0, 10) };
-            TextBox textBox = new TextBox { MinWidth = 200 };
-            Button okButton = new Button { Content = "OK", Width = 60, Margin = new Thickness(10, 5, 0, 0), IsDefault = true };
-
-            okButton.Click += (s, e) => { inputDialog.DialogResult = true; inputDialog.Close(); };
-
-            panel.Children.Add(textBlock);
-            panel.Children.Add(textBox);
-            panel.Children.Add(okButton);
-            inputDialog.Content = panel;
-
-            return inputDialog.ShowDialog() == true ? textBox.Text : string.Empty;
+            return InputDialog.Show(prompt, "Client Name");
         }
 
 
@@ -561,18 +632,7 @@ namespace OceanyaClient
             var clientToRemove = currentClient;
             if (clientToRemove == null) return;
 
-            var button = clients.FirstOrDefault(x => x.Value == clientToRemove).Key;
-
             await clientToRemove.Disconnect();
-
-            clients.Remove(button);
-            EmoteGrid.DeleteElement(button);
-
-            var newClient = clients.Values.FirstOrDefault();
-            if (newClient != null)
-            {
-                SelectClient(newClient);
-            }
         }
 
         private void ClientToggleButton_Checked(object sender, RoutedEventArgs e)
@@ -610,6 +670,93 @@ namespace OceanyaClient
                 {
                     button.IsChecked = false; // Uncheck other buttons
                 }
+            }
+        }
+
+        private void chkStickyEffects_Checked(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox)
+            {
+                ICMessageSettingsControl.stickyEffects = checkBox.IsChecked.Value;
+
+                SaveFile.Data.StickyEffect = checkBox.IsChecked.Value;
+                SaveFile.Save();
+            }
+        }
+        private void chkPosOnIniSwap_Checked(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox)
+            {
+                foreach (var client in clients.Values)
+                {
+                    client.switchPosWhenChangingINI = checkBox.IsChecked.Value;
+                }
+
+                SaveFile.Data.SwitchPosOnIniSwap = checkBox.IsChecked.Value;
+                SaveFile.Save();
+            }
+        }
+        
+
+        private async void btnRefreshCharacters_Click(object sender, RoutedEventArgs e)
+        {
+            var result = OceanyaMessageBox.Show("Are you sure you want to refresh your client assets? (This process may take a while)", "Refresh all Assets", MessageBoxButton.YesNo, MessageBoxImage.Information);
+
+            if (result != MessageBoxResult.Yes) return;
+            Globals.BaseFolders = Globals.GetBaseFolders(Globals.PathToConfigINI);
+            await WaitForm.ShowFormAsync("Refreshing character and background info...", this);
+            CharacterINI.RefreshCharacterList
+                (
+                    onParsedCharacter:
+                    (ini) =>
+                    {
+                        WaitForm.SetSubtitle("Parsed Character: " + ini.Name);
+                    },
+                    onChangedMountPath:
+                    (path) =>
+                    {
+                        WaitForm.SetSubtitle("Changed mount path: " + path);
+                    }
+                );
+            WaitForm.CloseForm();
+            ICMessageSettingsControl.ReinitializeSettings();
+            if (currentClient == null)
+            {
+                return;
+            }
+            SelectClient(currentClient);
+        }
+
+        bool temp = false;
+        private void Button_Click(object sender, RoutedEventArgs e)
+        {
+            OOCLogControl.ScrollToBottom();
+            for (int i = 0; i < 50; i++)
+            {
+                ICLogControl.AddMessage(currentClient, "test", "test");
+            }
+        }
+
+        private void DragWindow(object sender, MouseButtonEventArgs e)
+        {
+            if (e.ChangedButton == MouseButton.Left)
+            {
+                this.DragMove();
+            }
+        }
+
+        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        {
+            this.Close();
+        }
+
+        private void chkInvertLog_Checked(object sender, RoutedEventArgs e)
+        {
+            if (sender is CheckBox checkBox)
+            {
+                ICLogControl.SetInvertOnClientLogs(checkBox.IsChecked.Value);
+                SaveFile.Data.InvertICLog = checkBox.IsChecked.Value;
+                SaveFile.Save();
             }
         }
     }

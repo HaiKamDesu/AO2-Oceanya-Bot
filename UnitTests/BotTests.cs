@@ -14,7 +14,7 @@ namespace AOBot_Testing.Tests
     [TestFixture]
     public class BotTests
     {
-        AOBot? testingBot = null;
+        AOClient? testingBot = null;
         bool listeningForConfirmation = false;
         bool receivedMessage = false;
         string message = "";
@@ -22,7 +22,7 @@ namespace AOBot_Testing.Tests
         [OneTimeSetUp]
         public void Setup()
         {
-            testingBot = new AOBot(Globals.IPs[Globals.Servers.ChillAndDices], "Basement/testing");
+            testingBot = new AOClient(Globals.IPs[Globals.Servers.ChillAndDices], "Basement/testing");
             testingBot.Connect().Wait();
             testingBot.SetCharacter("Franziska");
 

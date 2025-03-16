@@ -17,50 +17,12 @@ namespace OceanyaClient.Components
             public string Name { get; set; }
             public string ImagePath { get; set; }
         }
-        private const int MaxVisibleItems = 20000; // Show only 20 at a time
+        private const int MaxVisibleItems = 20000; // Show only X at a time
 
         private ObservableCollection<DropdownItem> allItems = new();
-        private bool isManuallySelecting = false;
         private TextBox editableTextBox; // The ComboBox's editable TextBox
-        private bool enableAutoComplete = true; // Default to true
         public event EventHandler<string> OnConfirm;
         private bool isReadOnly = false;
-        public bool EnableAutoComplete
-        {
-            get => enableAutoComplete;
-            set
-            {
-                enableAutoComplete = value;
-                if (!enableAutoComplete)
-                {
-                    cboINISelect.IsDropDownOpen = false; // Ensure dropdown is closed when disabled
-                }
-            }
-        }
-        public static readonly DependencyProperty ShowImageProperty =
-            DependencyProperty.Register("ShowImage", typeof(bool), typeof(ImageComboBox),
-                new PropertyMetadata(true));
-
-        public static readonly DependencyProperty IsEditableProperty =
-            DependencyProperty.Register("IsEditable", typeof(bool), typeof(ImageComboBox),
-                new PropertyMetadata(true));
-
-        public bool ShowImage
-        {
-            get { return (bool)GetValue(ShowImageProperty); }
-            set { SetValue(ShowImageProperty, value); }
-        }
-
-        public bool IsEditable
-        {
-            get { return (bool)GetValue(IsEditableProperty); }
-            set { SetValue(IsEditableProperty, value); }
-        }
-        Grid grid;
-        private ColumnDefinition columnIcon;
-        private ColumnDefinition columnText;
-        private ColumnDefinition columnDropdown;
-
         public ImageComboBox()
         {
             InitializeComponent();
@@ -76,31 +38,121 @@ namespace OceanyaClient.Components
                 }
             };
         }
-
-
-        private void FilterDropdown(string input)
-        {
-            var filteredItems = allItems
-                .Where(item => item.Name.StartsWith(input, StringComparison.OrdinalIgnoreCase))
-                .Take(MaxVisibleItems)
-                .ToList();
-
-            cboINISelect.ItemsSource = filteredItems;
-            cboINISelect.IsDropDownOpen = filteredItems.Count > 0;
-        }
-
-
         public void Add(string name, string imagePath)
         {
             Application.Current.Dispatcher.Invoke(() =>
             {
                 allItems.Add(new DropdownItem { Name = name, ImagePath = imagePath });
+                cboINISelect.ItemsSource = allItems;
             });
         }
 
 
+        // Add a flag to track when we're programmatically changing text
+        private bool isInternalUpdate = false;
+        private string lastConfirmedText = string.Empty;
 
-        string userTypedInput = "";
+        // Modify the FilterDropdown method
+        private void FilterDropdown(string input)
+        {
+            // Don't filter if we're in the middle of an internal update
+            if (isInternalUpdate) return;
+
+            var filteredItems = allItems
+                .Where(item => item.Name.StartsWith(input, StringComparison.OrdinalIgnoreCase))
+                .Take(MaxVisibleItems)
+                .ToList();
+
+            // Update the dropdown items without changing the text
+            isInternalUpdate = true;
+            cboINISelect.ItemsSource = filteredItems;
+            isInternalUpdate = false;
+
+            // Only open dropdown if we have items and user is actively typing
+            cboINISelect.IsDropDownOpen = filteredItems.Count > 0;
+        }
+
+        // Update the TextChanged handler
+        private void cboINISelect_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            if (isReadOnly || isInternalUpdate) return;
+
+            // Store current selection positions
+            int selectionStart = editableTextBox.SelectionStart;
+            int selectionLength = editableTextBox.SelectionLength;
+
+            // Filter dropdown based on current text
+            FilterDropdown(editableTextBox.Text);
+
+            // Restore selection after filtering
+            editableTextBox.SelectionStart = selectionStart;
+            editableTextBox.SelectionLength = selectionLength;
+        }
+
+        // Update the SelectionChanged handler to prevent unwanted selections
+        private void cboINISelect_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            // Only process selection changes that come from user clicking on an item
+            // Not from filtering or programmatic changes
+            if (e.AddedItems.Count > 0 && !isInternalUpdate && cboINISelect.IsDropDownOpen)
+            {
+                var item = (DropdownItem)e.AddedItems[0];
+                ConfirmSelection(item.Name);
+            }
+        }
+
+        // Modify ConfirmSelection to be more robust
+        private void ConfirmSelection(string text)
+        {
+            isInternalUpdate = true;
+            cboINISelect.IsDropDownOpen = false;
+
+            // Find the exact match first
+            var selectedItem = allItems.FirstOrDefault(item =>
+                string.Equals(item.Name, text, StringComparison.OrdinalIgnoreCase));
+
+            // If no exact match and we want to allow selecting text that doesn't match any item
+            if (selectedItem == null)
+            {
+                SetSelectedItemImage("");
+                cboINISelect.Text = text; // Preserve user input
+            }
+            else
+            {
+                // We found a match, use its properties
+                SetSelectedItemImage(selectedItem.ImagePath);
+                cboINISelect.Text = selectedItem.Name; // Use exact case from the item
+            }
+
+            lastConfirmedText = cboINISelect.Text;
+            OnConfirm?.Invoke(this, cboINISelect.Text);
+
+            if (!isReadOnly && editableTextBox != null)
+            {
+                editableTextBox.SelectionStart = editableTextBox.Text.Length;
+                editableTextBox.SelectionLength = 0;
+            }
+
+            cboINISelect.Dispatcher.BeginInvoke(new Action(() =>
+            {
+                isInternalUpdate = false;
+                cboINISelect.ItemsSource = allItems;
+            }), System.Windows.Threading.DispatcherPriority.Background);
+        }
+
+        // Modify the LostFocus handler to be less disruptive
+        private void cboINISelect_LostFocus(object sender, RoutedEventArgs e)
+        {
+            cboINISelect.IsDropDownOpen = false;
+
+            // When focus is lost, confirm the current text if it has changed
+            if (!isReadOnly && cboINISelect.Text != lastConfirmedText)
+            {
+                ConfirmSelection(cboINISelect.Text);
+            }
+        }
+
+        // Update KeyDown handler to be more specific
         private void cboINISelect_KeyDown(object sender, KeyEventArgs e)
         {
             if (this.isReadOnly)
@@ -112,106 +164,31 @@ namespace OceanyaClient.Components
             if (e.Key == Key.Enter)
             {
                 e.Handled = true;
-                isManuallySelecting = true;
-
-                if (editableTextBox != null)
-                {
-                    editableTextBox.SelectionStart = editableTextBox.Text.Length;
-                    editableTextBox.SelectionLength = 0;
-                }
-                // Disable autocomplete after committing selection
-                EnableAutoComplete = false;
-
-                // Close dropdown and prevent reopening
-
-                // Move focus away to fully exit editing mode
-                cboINISelect.Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    Keyboard.ClearFocus();
-                }), System.Windows.Threading.DispatcherPriority.Background);
-
-                isManuallySelecting = false;
                 cboINISelect.IsDropDownOpen = false;
 
-                ConfirmSelection(cboINISelect.Text); //Fire an event when Enter is pressed
-            }
-        }
-
-        private CancellationTokenSource debounceToken;
-
-        private void cboINISelect_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            userTypedInput = editableTextBox.Text.Substring(0, editableTextBox.SelectionStart);
-
-            FilterDropdown(userTypedInput);
-
-            EnableAutoComplete = true; 
-
-            if (editableTextBox == null) return;
-
-            if (isManuallySelecting || !EnableAutoComplete) return;
-
-
-            var match = allItems.FirstOrDefault(item => item.Name.StartsWith(userTypedInput, StringComparison.OrdinalIgnoreCase));
-            if (match != null)
-            {
-                if (match.Name.ToLower() != userTypedInput.ToLower())
+                var match = allItems.FirstOrDefault(item => item.Name.StartsWith(cboINISelect.Text, StringComparison.OrdinalIgnoreCase));
+                if (match != null)
                 {
-                    if (match.Name.Length >= userTypedInput.Length && !string.IsNullOrEmpty(userTypedInput))
-                    {
-                        editableTextBox.TextChanged -= cboINISelect_TextChanged;
-                        editableTextBox.Text = match.Name;
-                        editableTextBox.TextChanged += cboINISelect_TextChanged;
-                        editableTextBox.SelectionStart = userTypedInput.Length;
-                        editableTextBox.SelectionLength = match.Name.Length - userTypedInput.Length;
-                    }
+                    ConfirmSelection(match.Name);
                 }
-                else if (match.Name.Length == 1)
+                else
                 {
-                    editableTextBox.SelectionStart = editableTextBox.Text.Length;
-                    editableTextBox.SelectionLength = 0;
+                    ConfirmSelection(cboINISelect.Text);
                 }
             }
-
-            // Ensure the TextBox remains focused
-            editableTextBox.Focus();
         }
-
 
 
 
         private void cboINISelect_PreviewKeyDown(object sender, KeyEventArgs e)
         {
-            if (e.Key == Key.Back)
+            if (e.Key == Key.Enter)
             {
-                EnableAutoComplete = false; // Disable autocomplete after Backspace
-
-                // Check if the selection crosses the user-typed input
-                if (editableTextBox.SelectionStart < userTypedInput.Length)
-                {
-                    string newText = userTypedInput.Substring(0, editableTextBox.SelectionStart);
-                    editableTextBox.Text = newText;
-                }
-                else
-                {
-                    // Otherwise, handle backspace normally
-                    editableTextBox.Text = userTypedInput;
-                }
-
-                editableTextBox.SelectionStart = editableTextBox.Text.Length;
-                editableTextBox.SelectionLength = 0;
+                
             }
         }
 
 
-
-
-        private void cboINISelect_LostFocus(object sender, RoutedEventArgs e)
-        {
-            cboINISelect.IsDropDownOpen = false;
-
-            if (cboINISelect.Text == "") return;
-        }
 
 
         public string SelectedText
@@ -222,37 +199,8 @@ namespace OceanyaClient.Components
                 var prevFocusable = editableTextBox.Focusable;
                 editableTextBox.Focusable = false;
                 cboINISelect.Text = value;
-                ConfirmSelection(cboINISelect.Text);
+                ConfirmSelection(value);
                 editableTextBox.Focusable = prevFocusable;
-            }
-        }
-
-        private void ConfirmSelection(string text)
-        {
-            cboINISelect.IsDropDownOpen = false;
-            editableTextBox.SelectionStart = editableTextBox.Text.Length;
-            editableTextBox.SelectionLength = 0;
-
-            var selectedItem = allItems.FirstOrDefault(item => item.Name == text);
-            if (selectedItem != null)
-            {
-                SetSelectedItemImage(selectedItem.ImagePath);
-            }
-            else
-            {
-                SetSelectedItemImage("");
-            }
-
-            OnConfirm?.Invoke(this, text); // Fire event with selected text
-        }
-
-
-        private void cboINISelect_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        {
-            if (e.AddedItems.Count > 0)
-            {
-                var item = (DropdownItem)e.AddedItems[0];
-                ConfirmSelection(item.Name); // Fire event when dropdown item is selected
             }
         }
 
@@ -264,16 +212,6 @@ namespace OceanyaClient.Components
                 cboINISelect.ItemsSource = null;
             });
         }
-
-        public void SetComboBoxReadOnly(bool isReadOnly)
-        {
-            this.isReadOnly = isReadOnly;
-            Focusable = !isReadOnly;
-            IsTabStop = !isReadOnly;
-            //cboINISelect.Focusable = !isReadOnly;
-            //cboINISelect.Focusable = !isReadOnly;
-        }
-
         public void SetSelectedItemImage(string imagePath)
         {
             if (cboINISelect.Template.FindName("imgSelected", cboINISelect) is Image imgSelected)
@@ -317,8 +255,43 @@ namespace OceanyaClient.Components
             if (isReadOnly)
             {
                 e.Handled = true; // Prevents the TextBox from being clicked/focused
-                cboINISelect.IsDropDownOpen = !cboINISelect.IsDropDownOpen;
+
+                // Don't toggle the dropdown here, as it might conflict with mouse click behavior
+                // Just prevent focus
             }
         }
+
+        // Update the SetComboBoxReadOnly method:
+        public void SetComboBoxReadOnly(bool isReadOnly)
+        {
+            this.isReadOnly = isReadOnly;
+
+            // Update control properties based on read-only state
+            if (editableTextBox != null)
+            {
+                editableTextBox.IsReadOnly = isReadOnly;
+            }
+
+            Focusable = !isReadOnly;
+            IsTabStop = !isReadOnly;
+
+            // If the control is read-only, ensure the dropdown button is still clickable
+            // and the text area won't try to get focus
+            if (isReadOnly)
+            {
+                // The EditableTextBox_PreviewMouseDown and EditableTextBox_PreviewGotKeyboardFocus
+                // methods will handle clicks and focus events when in read-only mode
+            }
+            else
+            {
+                // Ensure the textbox can receive input when not read-only
+                if (editableTextBox != null)
+                {
+                    editableTextBox.Focusable = true;
+                }
+            }
+        }
+
+        
     }
 }
