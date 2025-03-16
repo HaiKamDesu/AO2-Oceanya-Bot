@@ -330,6 +330,7 @@ namespace OceanyaClient
                             OOCLogControl.IsEnabled = false;
                             ICLogControl.IsEnabled = false;
                             ICMessageSettingsControl.IsEnabled = false;
+                            OOCLogControl.UpdateStreamLabel(null);
                         }
                         else
                         {

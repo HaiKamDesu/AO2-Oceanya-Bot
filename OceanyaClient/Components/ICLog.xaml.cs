@@ -158,9 +158,6 @@ namespace OceanyaClient.Components
                             currentText.Clear();
                         }
 
-                        // Pop the color stack
-                        colorStack.Pop();
-
                         // Include the marker in output if not removed
                         if (!markerRule.Remove)
                         {
@@ -168,6 +165,9 @@ namespace OceanyaClient.Components
                             segments.Add((currentText.ToString(), colorStack.Peek().Color));
                             currentText.Clear();
                         }
+
+                        // Pop the color stack
+                        colorStack.Pop();
 
                         isProcessed = true;
                     }

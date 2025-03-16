@@ -395,6 +395,8 @@ namespace OceanyaClient.Components
             EffectDropdown.SelectedText = ICMessage.Effects.None.ToString();
             chkPreanim.IsChecked = false;
             sfxDropdown.SelectedText = "";
+
+            OnResetMessageEffects?.Invoke();
         }
 
         private void txtICShowname_TextChanged(object sender, TextChangedEventArgs e)

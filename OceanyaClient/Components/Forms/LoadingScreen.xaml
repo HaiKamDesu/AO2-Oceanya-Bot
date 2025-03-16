@@ -12,7 +12,8 @@
         WindowStartupLocation="CenterScreen"
         WindowStyle="None"
         AllowsTransparency="True"
-        Background="Transparent">
+        Background="Transparent"
+        Topmost="True">
 
     <Window.Resources>
         <!-- Window Animations -->
