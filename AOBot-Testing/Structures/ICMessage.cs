@@ -215,7 +215,7 @@ namespace AOBot_Testing.Structures
                     PreAnim = parts[2],
                     Character = parts[3],
                     Emote = parts[4],
-                    Message = parts[5],
+                    Message = Globals.ReplaceTextForSymbols(parts[5]),
                     Side = parts[6],
                     SfxName = parts[7],
                     EmoteModifier = int.TryParse(parts[8], out int emoteModifier) ? (EmoteModifiers)emoteModifier : EmoteModifiers.NoPreanimation,
@@ -259,7 +259,7 @@ namespace AOBot_Testing.Structures
                     $"{message.PreAnim}#" +
                     $"{message.Character}#" +
                     $"{message.Emote}#" +
-                    $"{message.Message}#" +
+                    $"{Globals.ReplaceSymbolsForText(message.Message)}#" +
                     $"{message.Side}#" +
                     $"{message.SfxName}#" +
                     $"{(int)message.EmoteModifier}#" +

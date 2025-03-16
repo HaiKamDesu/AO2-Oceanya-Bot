@@ -172,7 +172,7 @@ namespace AOBot_Testing.Agents
             if (ws != null && ws.State == WebSocketState.Open)
             {
                 OOCShowname = showname;
-                string oocMessage = $"CT#{showname}#{message}#%";
+                string oocMessage = $"CT#{showname}#{Globals.ReplaceSymbolsForText(message)}#%";
                 await SendPacket(oocMessage);
                 await Task.Delay(500);
             }
@@ -305,7 +305,7 @@ namespace AOBot_Testing.Agents
             {
                 var fields = message.Split("#");
                 var showname = fields[1];
-                var messageText = fields[2];
+                var messageText = Globals.ReplaceTextForSymbols(fields[2]);
                 var fromServer = fields[3].ToString() == "1";
 
                 if (messageText.ToLower().Contains("people in this area: ") && messageText.ToLower().Contains("===") && messageText.Split("\n").Length > 3)

@@ -24,7 +24,7 @@ namespace OceanyaClient
     {
         Dictionary<ToggleButton, AOClient> clients = new Dictionary<ToggleButton, AOClient>();
         AOClient currentClient;
-        private bool debug = true;
+        private bool debug = false;
 
         List<ToggleButton> objectionModifiers;
         public MainWindow()

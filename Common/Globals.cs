@@ -5,30 +5,30 @@ using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 
-    public static class Globals
+public static class Globals
+{
+    public static string PathToConfigINI = "";
+    public static List<string> BaseFolders = new List<string>();
+    public static string ConnectionString = "Basement/testing";
+    public enum Servers { ChillAndDices, Vanilla, CaseCafe }
+    public static Dictionary<Servers, string> IPs = LoadServerIPs();
+
+    private static Dictionary<Servers, string> LoadServerIPs()
     {
-        public static string PathToConfigINI = "";
-        public static List<string> BaseFolders = new List<string>();
-        public static string ConnectionString = "Basement/testing";
-        public enum Servers { ChillAndDices, Vanilla, CaseCafe }
-        public static Dictionary<Servers, string> IPs = LoadServerIPs();
-
-        private static Dictionary<Servers, string> LoadServerIPs()
+        try
         {
-            try
-            {
-                var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "server.json");
-                var json = File.ReadAllText(filePath);
-                return JsonSerializer.Deserialize<Dictionary<Servers, string>>(json);
+            var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "server.json");
+            var json = File.ReadAllText(filePath);
+            return JsonSerializer.Deserialize<Dictionary<Servers, string>>(json);
 
-            }
-            catch
-            {
-                return new Dictionary<Servers, string>();
-            }
         }
+        catch
+        {
+            return new Dictionary<Servers, string>();
+        }
+    }
 
-        public static string AI_SYSTEM_PROMPT = @"
+    public static string AI_SYSTEM_PROMPT = @"
 You are an Attorney Online (AO2) player who interacts with others based on the chatlog. 
 You decide **when to respond and when to remain silent**. If you do not wish to respond, output only: `SYSTEM_WAIT()` disregarding any and all json formats.
 
@@ -46,21 +46,21 @@ You decide **when to respond and when to remain silent**. If you do not wish to 
 ## 📦 Response Format:
 Your response must be structured as:
 {
-  ""message"": ""(your message here)"",
-  ""chatlog"": ""(OOC or IC)"",
-  ""showname"": ""(consistent showname of your choosing)"",
-  ""current_character"": ""(The current character name you are using, do not change unless explicitly requested. This by default is ""[[[current_character]]])"""",
-  ""currentEmote"": ""(The current emote of the character you are using, do not change unless explicitly requested. This by default is ""[[[current_emote]]])"""",
-  ""modifiers"": {
-    ""deskMod"": (integer value corresponding to an ICMessage.DeskMods option, describe any requested change),
-    ""emoteMod"": (integer value corresponding to an ICMessage.EmoteModifiers option, describe any requested change),
-    ""shoutModifiers"": (integer value corresponding to an ICMessage.ShoutModifiers option, describe any requested change),
-    ""flip"": (1 for true, 0 for false) If 1, your character sprites will be flipped horizontally. Do not use this often.,
-    ""realization"": (1 for true, 0 for false) If 1, adds a realization effect to your message like in Ace Attorney. Only use for impact, never for normal conversation.,
-    ""textColor"": (integer value corresponding to an ICMessage.TextColors option, usually should be kept 0 unless specified otherwise.),
-    ""immediate"": (1 for true, 0 for false) If 1, your message and preanimation will play simultaneously. Default is 0, where preanimation plays first.,
-    ""additive"": (1 for true, 0 for false) If 1, your message will be added to the last message in the log. This is almost never used.
-  }
+""message"": ""(your message here)"",
+""chatlog"": ""(OOC or IC)"",
+""showname"": ""(consistent showname of your choosing)"",
+""current_character"": ""(The current character name you are using, do not change unless explicitly requested. This by default is ""[[[current_character]]])"""",
+""currentEmote"": ""(The current emote of the character you are using, do not change unless explicitly requested. This by default is ""[[[current_emote]]])"""",
+""modifiers"": {
+""deskMod"": (integer value corresponding to an ICMessage.DeskMods option, describe any requested change),
+""emoteMod"": (integer value corresponding to an ICMessage.EmoteModifiers option, describe any requested change),
+""shoutModifiers"": (integer value corresponding to an ICMessage.ShoutModifiers option, describe any requested change),
+""flip"": (1 for true, 0 for false) If 1, your character sprites will be flipped horizontally. Do not use this often.,
+""realization"": (1 for true, 0 for false) If 1, adds a realization effect to your message like in Ace Attorney. Only use for impact, never for normal conversation.,
+""textColor"": (integer value corresponding to an ICMessage.TextColors option, usually should be kept 0 unless specified otherwise.),
+""immediate"": (1 for true, 0 for false) If 1, your message and preanimation will play simultaneously. Default is 0, where preanimation plays first.,
+""additive"": (1 for true, 0 for false) If 1, your message will be added to the last message in the log. This is almost never used.
+}
 }
 - **DO NOT change `showname` once decided** unless explicitly requested or you find it *extremely* funny.
 - If an **awkward/shocking** message appears, you may respond with a **single space ("" "")** in the appropriate chatlog.
@@ -123,49 +123,75 @@ Each of these settings has predefined integer values. **If a change is requested
 - Avoid breaking immersion unless OOC interactions demand it.
 ";
 
-        public static bool UseOpenAIAPI = false;
-        public static bool DebugMode = true;
+    public static bool UseOpenAIAPI = false;
+    public static bool DebugMode = true;
 
-        public static List<string> GetBaseFolders(string pathToConfigINI)
+    public static Dictionary<string, string> ReplaceInMessages = new Dictionary<string, string>()
+    {
+        { "<percent>", "%" },
+        { "<dollar>", "$" },
+        { "<num>", "#" },
+        { "<and>", "&" },
+    };
+    public static List<string> GetBaseFolders(string pathToConfigINI)
+    {
+        string mountPathsRaw = "";
+        foreach (string line in File.ReadLines(pathToConfigINI))
         {
-            string mountPathsRaw = "";
-            foreach (string line in File.ReadLines(pathToConfigINI))
+            if (line.StartsWith("mount_paths="))
             {
-                if (line.StartsWith("mount_paths="))
-                {
-                    mountPathsRaw = line.Substring("mount_paths=".Length).Trim();
-                    break;
-                }
+                mountPathsRaw = line.Substring("mount_paths=".Length).Trim();
+                break;
             }
-
-            List<string> mountPaths = new List<string>() { Path.GetDirectoryName(pathToConfigINI) };
-
-            if (mountPathsRaw != "@Invalid()")
-            {
-                mountPaths.AddRange(mountPathsRaw.Split(',').Select(p => p.Trim()));
-            }
-            mountPaths.Reverse();
-
-            for (int i = 0; i < mountPaths.Count; i++)
-            {
-                var current = mountPaths[i];
-
-                if (!Directory.Exists(current))
-                {
-                    var newMountPath = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(pathToConfigINI)), current);
-
-                    if (!Directory.Exists(newMountPath))
-                    {
-                        throw new FileNotFoundException("Mount path not found: " + current);
-                    }
-                    else
-                    {
-                        mountPaths[i] = newMountPath;
-                    }
-                }
-            }
-
-            return mountPaths;
         }
+
+        List<string> mountPaths = new List<string>() { Path.GetDirectoryName(pathToConfigINI) };
+
+        if (mountPathsRaw != "@Invalid()")
+        {
+            mountPaths.AddRange(mountPathsRaw.Split(',').Select(p => p.Trim()));
+        }
+        mountPaths.Reverse();
+
+        for (int i = 0; i < mountPaths.Count; i++)
+        {
+            var current = mountPaths[i];
+
+            if (!Directory.Exists(current))
+            {
+                var newMountPath = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(pathToConfigINI)), current);
+
+                if (!Directory.Exists(newMountPath))
+                {
+                    throw new FileNotFoundException("Mount path not found: " + current);
+                }
+                else
+                {
+                    mountPaths[i] = newMountPath;
+                }
+            }
+        }
+
+        return mountPaths;
     }
+
+    public static string ReplaceTextForSymbols(string message)
+    {
+        foreach (var entry in ReplaceInMessages)
+        {
+            message = message.Replace(entry.Key, entry.Value);
+        }
+        return message;
+    }
+
+    public static string ReplaceSymbolsForText(string message)
+    {
+        foreach (var entry in ReplaceInMessages)
+        {
+            message = message.Replace(entry.Value, entry.Key);
+        }
+        return message;
+    }
+
+}
 
