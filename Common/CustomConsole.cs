@@ -13,10 +13,11 @@ namespace Common
 
         public static void WriteLine(string message)
         {
-            Console.WriteLine(message);
-            System.Diagnostics.Debug.WriteLine(message);
+            string timestampedMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}";
+            Console.WriteLine(timestampedMessage);
+            System.Diagnostics.Debug.WriteLine(timestampedMessage);
 
-            lines.Add(message);
+            lines.Add(timestampedMessage);
         }
     }
 }

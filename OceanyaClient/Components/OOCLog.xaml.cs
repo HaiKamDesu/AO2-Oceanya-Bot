@@ -47,7 +47,7 @@ namespace OceanyaClient.Components
 
         public void UpdateStreamLabel(AOClient client)
         {
-            lblStream.Content = client != null ? $"[{client.clientName} (ID: {client.playerID})]" : "[STREAM]";
+            lblStream.Content = client != null ? $"[{client.playerID}] {client.iniPuppetName} (\"{client.clientName}\")" : "[STREAM]";
         }
 
         public void AddMessage(AOClient client, string showName, string message, bool isSentFromServer = false)

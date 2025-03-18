@@ -107,6 +107,31 @@ namespace OceanyaClient
                     client.shoutModifiers = ICMessage.ShoutModifiers.Custom;
                 }
 
+
+                void OnICMessageReceivedHandler(ICMessage icMessage)
+                {
+                    if (icMessage.CharId == client.iniPuppetID && 
+                    (icMessage.Message == "~"+sendMessage+"~" || icMessage.Message == sendMessage || icMessage.Message == sendMessage+"~"))
+                    {
+                        // Message was received by server.
+                        ICMessageSettingsControl.Dispatcher.Invoke(() =>
+                        {
+                            ICMessageSettingsControl.txtICMessage.Text = "";
+
+                            if (!ICMessageSettingsControl.stickyEffects)
+                            {
+                                ICMessageSettingsControl.ResetMessageEffects();
+                            }
+                        });
+
+                        // Unsubscribe from the event
+                        client.OnICMessageReceived -= OnICMessageReceivedHandler;
+                    }
+                }
+
+                client.OnICMessageReceived -= OnICMessageReceivedHandler;
+                // Subscribe to the event
+                client.OnICMessageReceived += OnICMessageReceivedHandler;
                 await client.SendICMessage(sendMessage);
             };
 
@@ -143,7 +168,7 @@ namespace OceanyaClient
         }
         private void UpdateClientTooltip(AOClient bot)
         {
-            clients.Where(x => x.Value == bot).FirstOrDefault().Key.ToolTip = $"\"{bot.clientName}\" (AO ID: {bot.playerID})";
+            clients.Where(x => x.Value == bot).FirstOrDefault().Key.ToolTip = $"[{bot.playerID}] {bot.iniPuppetName} (\"{bot.clientName}\")";
         }
         private void AddClient(string clientName)
         {
@@ -169,9 +194,11 @@ namespace OceanyaClient
                 {
                     Dispatcher.Invoke(() =>
                     {
+                        bool isSentFromSelf = clients.Select(x => x.Value.iniPuppetID).Contains(icMessage.CharId);
+
                         ICLogControl.AddMessage(bot, icMessage.ShowName,
                             icMessage.Message,
-                            icMessage.CharId == bot.selectedCharacterIndex, icMessage.TextColor);
+                            isSentFromSelf, icMessage.TextColor);
                     });
                 };
 
@@ -204,6 +231,11 @@ namespace OceanyaClient
                 renameMenuItem.Click += (sender, args) => RenameClient(bot);
 
                 contextMenu.Items.Add(renameMenuItem);
+
+                MenuItem iniPuppetChange = new MenuItem { Header = "Select new INIPuppet" };
+                iniPuppetChange.Click += async (sender, args) => await bot.SelectFirstAvailableINIPuppet(false);
+                contextMenu.Items.Add(iniPuppetChange);
+
                 toggleBtn.ContextMenu = contextMenu;
                 #endregion
                 // Subscribe to OnChangedCharacter event
@@ -301,6 +333,32 @@ namespace OceanyaClient
                         }
                     });
                 };
+                bot.OnWebsocketDisconnect += () =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        ICLogControl.AddMessage(bot, "Oceanya Client", "Disconnected from server.", true, ICMessage.TextColors.Red);
+                        OOCLogControl.AddMessage(bot, "Oceanya Client", "Disconnected from server.", true);
+                    });
+                };
+                bot.OnReconnectionAttempt += (int attemptCount) =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        string message = $"Reconnecting...{(attemptCount != 1 ? $" (Attempt {attemptCount})":"")}";
+                        ICLogControl.AddMessage(bot, "Oceanya Client", message, true, ICMessage.TextColors.Yellow);
+                        OOCLogControl.AddMessage(bot, "Oceanya Client", message, true);
+                    });
+                };
+                bot.OnReconnectionAttemptFailed += (int attemptCount) =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        string message = $"Attempt {attemptCount} failed.";
+                        ICLogControl.AddMessage(bot, "Oceanya Client", message, true, ICMessage.TextColors.Red);
+                        OOCLogControl.AddMessage(bot, "Oceanya Client", message, true);
+                    });
+                };
                 bot.OnReconnect += () =>
                 {
                     Dispatcher.Invoke(() =>
@@ -341,6 +399,17 @@ namespace OceanyaClient
                             }
                         }
                             
+                    });
+                };
+                bot.OnINIPuppetChange += () =>
+                {
+                    Dispatcher.Invoke(() =>
+                    {
+                        if(bot == currentClient)
+                        {
+                            OOCLogControl.UpdateStreamLabel(bot);
+                        }
+                        UpdateClientTooltip(bot);
                     });
                 };
                 bot.SetCharacter(bot.currentINI);
@@ -417,7 +486,7 @@ namespace OceanyaClient
                 switch (chatLogType)
                 {
                     case "IC":
-                        if (showName == bot.ICShowname && characterName == bot.currentINI.Name && iniPuppetID == bot.selectedCharacterIndex)
+                        if (showName == bot.ICShowname && characterName == bot.currentINI.Name && iniPuppetID == bot.iniPuppetID)
                         {
                             return;
                         }
@@ -729,12 +798,11 @@ namespace OceanyaClient
         }
 
         bool temp = false;
-        private void Button_Click(object sender, RoutedEventArgs e)
+        private async void Button_Click(object sender, RoutedEventArgs e)
         {
-            OOCLogControl.ScrollToBottom();
-            for (int i = 0; i < 50; i++)
+            foreach (var item in clients.Values)
             {
-                ICLogControl.AddMessage(currentClient, "test", "test");
+                await item.SimulateInternetConnectionIssue();
             }
         }
 
@@ -748,6 +816,10 @@ namespace OceanyaClient
 
         private void CloseButton_Click(object sender, RoutedEventArgs e)
         {
+            var config = new InitialConfigurationWindow();
+            config.Activate();
+            config.Show();
+
             this.Close();
         }
 

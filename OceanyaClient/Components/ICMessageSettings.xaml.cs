@@ -377,18 +377,12 @@ namespace OceanyaClient.Components
             {
                 e.Handled = true; // Prevents the beep sound from default Enter behavior
                 string message = txtICMessage.Text;
-                txtICMessage.Clear();
                 OnSendICMessage?.Invoke(message);
-
-                if(!stickyEffects)
-                {
-                    ResetMessageEffects();
-                }
             }
         }
 
         public Action OnResetMessageEffects;
-        private void ResetMessageEffects()
+        public void ResetMessageEffects()
         {
             btnRealization.IsChecked = false;
             btnScreenshake.IsChecked = false;

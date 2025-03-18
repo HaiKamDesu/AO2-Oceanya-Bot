@@ -105,5 +105,31 @@ namespace UnitTests
                 CustomConsole.WriteLine($"  {model.Key}: ${model.Value:F2}");
             }
         }
+
+
+        CountdownTimer timer;
+        [Test]
+        public async Task TestM_INITesting()
+        {
+            for (int i = 0; i < 3; i++)
+            {
+                CustomConsole.WriteLine("[[TIMER START]]");
+                if (timer == null)
+                {
+                    timer = new CountdownTimer(TimeSpan.FromSeconds(10));
+                    timer.TimerElapsed += () =>
+                    {
+                        CustomConsole.WriteLine("[[TIMER END]]");
+                        Assert.Fail("[[TIMER END]]");
+                    };
+                }
+                else
+                {
+                    timer.Reset(TimeSpan.FromSeconds(10));
+                }
+
+                await Task.Delay(2000);
+            }
+        }
     }
 }

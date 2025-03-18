@@ -8,6 +8,7 @@ using NUnit.Framework;
 using AOBot_Testing.Structures;
 using AOBot_Testing.Agents;
 using static AOBot_Testing.Structures.ICMessage;
+using Common;
 
 namespace AOBot_Testing.Tests
 {
@@ -36,7 +37,7 @@ namespace AOBot_Testing.Tests
                 switch (chatLogType)
                 {
                     case "IC":
-                        if (showName == testingBot.ICShowname && characterName == testingBot.currentINI.Name && iniPuppetID == testingBot.selectedCharacterIndex)
+                        if (showName == testingBot.ICShowname && characterName == testingBot.currentINI.Name && iniPuppetID == testingBot.iniPuppetID)
                         {
                             return;
                         }
@@ -237,6 +238,12 @@ namespace AOBot_Testing.Tests
             
 
             await Task.Delay(2000);
+        }
+
+
+        private void Timer_TimerElapsed()
+        {
+            throw new NotImplementedException();
         }
 
         [TearDown]

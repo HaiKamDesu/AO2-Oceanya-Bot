@@ -8,6 +8,8 @@ public class CountdownTimer
     private Stopwatch stopwatch;
     private TimeSpan duration;
     private CancellationTokenSource cancellationTokenSource;
+    private object lockObj = new object();
+    private bool isResetting = false; // NEW: Flag to track resets
 
     public event Action TimerElapsed;
 
@@ -19,36 +21,74 @@ public class CountdownTimer
 
     public void Start()
     {
-        if (stopwatch.IsRunning)
-            return; // Avoid restarting an already running timer
-
-        stopwatch.Restart();
-        cancellationTokenSource = new CancellationTokenSource();
-        Task.Run(async () =>
+        lock (lockObj)
         {
-            while (stopwatch.Elapsed < duration)
-            {
-                await Task.Delay(100);
-                if (cancellationTokenSource.Token.IsCancellationRequested)
-                    return;
-            }
-            TimerElapsed?.Invoke();
-            stopwatch.Stop();
-        }, cancellationTokenSource.Token);
+            if (stopwatch.IsRunning)
+                return; // Avoid restarting an already running timer
+
+            RestartTimer();
+        }
     }
 
     public void Stop()
     {
-        cancellationTokenSource?.Cancel();
-        stopwatch.Stop();
+        lock (lockObj)
+        {
+            cancellationTokenSource?.Cancel();
+            isResetting = true; // NEW: Mark that we are stopping/resetting
+            stopwatch.Stop();
+        }
+    }
+
+    public void Reset(TimeSpan newDuration)
+    {
+        lock (lockObj)
+        {
+            Stop(); // Ensure previous timer is canceled
+            duration = newDuration;
+            isResetting = false; // Reset flag for new countdown
+            RestartTimer();
+        }
+    }
+
+    private void RestartTimer()
+    {
+        cancellationTokenSource = new CancellationTokenSource();
+        stopwatch.Restart();
+
+        Task.Run(async () =>
+        {
+            try
+            {
+                while (stopwatch.Elapsed < duration)
+                {
+                    await Task.Delay(100, cancellationTokenSource.Token);
+                }
+
+                lock (lockObj)
+                {
+                    if (!cancellationTokenSource.Token.IsCancellationRequested && !isResetting)
+                    {
+                        TimerElapsed?.Invoke();
+                        stopwatch.Stop();
+                    }
+                }
+            }
+            catch (TaskCanceledException)
+            {
+                // Task was canceled, do nothing
+            }
+        }, cancellationTokenSource.Token);
     }
 
     public TimeSpan GetRemainingTime()
     {
-        var remainingTime = duration - stopwatch.Elapsed;
-        return remainingTime < TimeSpan.Zero ? TimeSpan.Zero : remainingTime;
+        lock (lockObj)
+        {
+            var remainingTime = duration - stopwatch.Elapsed;
+            return remainingTime < TimeSpan.Zero ? TimeSpan.Zero : remainingTime;
+        }
     }
-
 
     public bool IsRunning => stopwatch.IsRunning;
 }

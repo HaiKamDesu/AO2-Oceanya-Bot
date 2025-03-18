@@ -135,9 +135,12 @@ namespace OceanyaClient.Components
 
             cboINISelect.Dispatcher.BeginInvoke(new Action(() =>
             {
+                cboINISelect.SelectedItem = selectedItem;
                 isInternalUpdate = false;
                 cboINISelect.ItemsSource = allItems;
             }), System.Windows.Threading.DispatcherPriority.Background);
+
+            
         }
 
         // Modify the LostFocus handler to be less disruptive

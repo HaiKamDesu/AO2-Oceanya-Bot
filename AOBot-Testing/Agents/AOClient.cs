@@ -25,7 +25,8 @@ namespace AOBot_Testing.Agents
         /// Value: Whether the character is available for selection
         /// </summary>
         Dictionary<string, bool> serverCharacterList = new Dictionary<string, bool>();
-        public int selectedCharacterIndex = -1;
+        public int iniPuppetID = -1;
+        public string iniPuppetName => iniPuppetID == -1 ? "" : serverCharacterList.ElementAt(iniPuppetID).Key;
         public static string lastCharsCheck = string.Empty;
 
         string hdid;
@@ -78,16 +79,23 @@ namespace AOBot_Testing.Agents
         public Action<CharacterINI> OnChangedCharacter;
         public Action<string> OnBGChange;
         public Action<string> OnSideChange;
+        public Action OnINIPuppetChange; 
+        public Action<int> OnReconnectionAttempt;
+        public Action<int> OnReconnectionAttemptFailed;
         public Action OnReconnect;
+        public Action OnWebsocketDisconnect;
         public Action OnDisconnect;
 
+        private List<string> pendingMessages = new List<string>();
         #region Send Message Methods
-        public async Task SendICMessage(string showname, string message)
+        public async Task SendICMessage(string showname, string message, bool queueMessage = false)
         {
             SetICShowname(showname);
-            SendICMessage(message);
+            SendICMessage(message, queueMessage);
         }
-        public async Task SendICMessage(string message)
+        private bool isProcessingMessages = false;
+
+        public async Task SendICMessage(string message, bool queueMessage = false)
         {
             if (ws != null && ws.State == WebSocketState.Open)
             {
@@ -97,28 +105,20 @@ namespace AOBot_Testing.Agents
                 msg.Character = CurrentINI.Name;
                 msg.Emote = currentEmote.Animation;
 
-                // for some reason, specifically for the color red, the server decides to not color the text. So this is a clientside fix.
+                // Fix for red text color not applying
                 if (textColor == ICMessage.TextColors.Red)
                 {
-                    if(message.StartsWith("~"))
-                    {
-                        msg.Message = $"{message}~";
-                    }
-                    else
-                    {
-                        msg.Message = $"~{message}~";
-                    }
+                    msg.Message = message.StartsWith("~") ? $"{message}~" : $"~{message}~";
                 }
                 else
                 {
                     msg.Message = message;
                 }
 
-
                 msg.Side = curPos;
                 msg.SfxName = currentEmote.sfxName;
                 msg.EmoteModifier = Immediate ? ICMessage.EmoteModifiers.NoPreanimation : emoteMod;
-                msg.CharId = selectedCharacterIndex;
+                msg.CharId = iniPuppetID;
                 msg.SfxDelay = currentEmote.sfxDelay;
                 msg.ShoutModifier = shoutModifiers;
                 msg.EvidenceID = "0";
@@ -138,31 +138,82 @@ namespace AOBot_Testing.Agents
                 msg.Effect = effect;
                 msg.Blips = "";
 
-
-
                 string command = ICMessage.GetCommand(msg);
 
-                if(!AbleToSpeak)
+                /// If the message is queued, add it to the list of pending messages.
+                /// It'll be sent when the current messages are done processing.
+                /// It's not super accurate, though.
+                if (queueMessage)
                 {
-                    var remainingTime = speakTimer.GetRemainingTime();
-
-                    if (Globals.DebugMode)
+                    lock (pendingMessages)
                     {
-                        var formattedTime = $"{remainingTime.Hours}h {remainingTime.Minutes}m {remainingTime.Seconds}s {remainingTime.Milliseconds}ms";
-                        CustomConsole.WriteLine($"Cannot speak yet, waiting for {formattedTime}...");
+                        pendingMessages.Add(command);
                     }
-                    await Task.Delay((int)remainingTime.TotalMilliseconds);
+
+                    // **Ensure message processing starts**
+                    if (!isProcessingMessages)
+                    {
+                        isProcessingMessages = true;
+                        _ = Task.Run(ProcessPendingMessages);
+                    }
                 }
-
-                await SendPacket(command);
-
-                await Task.Delay(500); //Wait for command to process server-side
+                else
+                {
+                    await SendPacket(command);
+                    await Task.Delay(500);
+                }
             }
             else
             {
                 CustomConsole.WriteLine("WebSocket is not connected. Cannot send message.");
             }
         }
+
+        private async Task ProcessPendingMessages()
+        {
+            while (true)
+            {
+                string messageToSend = null;
+
+                lock (pendingMessages)
+                {
+                    if (pendingMessages.Count > 0)
+                    {
+                        messageToSend = pendingMessages[0];
+                    }
+                    else
+                    {
+                        isProcessingMessages = false;
+                        return;
+                    }
+                }
+
+                while (!AbleToSpeak)
+                {
+                    if (Globals.DebugMode)
+                    {
+                        var remainingTime = speakTimer.GetRemainingTime();
+                        var formattedTime = $"{remainingTime.Hours}h {remainingTime.Minutes}m {remainingTime.Seconds}s {remainingTime.Milliseconds}ms";
+                        CustomConsole.WriteLine($"Cannot speak yet, waiting for {formattedTime}...");
+                    }
+
+                    await Task.Delay(100);
+                }
+
+                lock (pendingMessages)
+                {
+                    if (pendingMessages.Count > 0)
+                    {
+                        pendingMessages.RemoveAt(0);
+                    }
+                }
+
+                await SendPacket(messageToSend);
+                await Task.Delay(500); // Wait for command to process server-side
+            }
+        }
+
+
         public async Task SendOOCMessage(string message)
         {
             SendOOCMessage(OOCShowname, message);
@@ -184,7 +235,7 @@ namespace AOBot_Testing.Agents
         #endregion
 
         #region Set Methods
-        public async Task SetArea(string areaName)
+        public async Task SetArea(string areaName, int delayBetweenAreas = 500)
         {
             if (ws != null && ws.State == WebSocketState.Open)
             {
@@ -195,7 +246,7 @@ namespace AOBot_Testing.Agents
                     await SendPacket(switchRoomCommand);
                     CustomConsole.WriteLine($"Switched to room: {area}");
                     // Allow some time between room switches  
-                    await Task.Delay(500);
+                    await Task.Delay(delayBetweenAreas);
                 }
 
                 currentArea = areaName;
@@ -292,13 +343,24 @@ namespace AOBot_Testing.Agents
                     OnICMessageReceived?.Invoke(icMessage);
 
                     AbleToSpeak = false;
-                    // Set the timer to a value and when it's done, set AbleToSpeak to true
-                    speakTimer = new CountdownTimer(new TimeSpan(0,0,0,0,(textCrawlSpeed * 3) * icMessage.Message.Length));
-                    speakTimer.TimerElapsed += () =>
+                    var delayTime = new TimeSpan(0, 0, 0, 0, (textCrawlSpeed * 2) * (icMessage.Message.Length));
+                    //var formattedDelayTime = $"{delayTime.Hours}h {delayTime.Minutes}m {delayTime.Seconds}s {delayTime.Milliseconds}ms";
+                    //CustomConsole.WriteLine($"[[SPEAK TIMER START - Duration: {formattedDelayTime}]]");
+
+                    if (speakTimer == null)
                     {
-                        AbleToSpeak = true;
-                    };
-                    speakTimer.Start();
+                        speakTimer = new CountdownTimer(delayTime);
+                        speakTimer.TimerElapsed += () =>
+                        {
+                            //CustomConsole.WriteLine("[[SPEAK TIMER ELAPSED]]");
+                            AbleToSpeak = true;
+                        };
+                        speakTimer.Start();
+                    }
+                    else
+                    {
+                        speakTimer.Reset(delayTime); // Reset already starts the timer in the new class
+                    }
                 }
             }
             else if (message.StartsWith("CT#"))
@@ -336,7 +398,7 @@ namespace AOBot_Testing.Agents
         }
 
         #region Connection Related Methods
-        public async Task Connect()
+        public async Task Connect(int betweenHandshakeAndSetArea = 0, int betweenSetAreas = 0, int betweenAreasAndIniPuppet = 1000, int finalDelay = 1000)
         {
             aliveTime.Reset();
             ws = new ClientWebSocket();
@@ -355,12 +417,13 @@ namespace AOBot_Testing.Agents
                 await PerformHandshake();
                 CustomConsole.WriteLine("===========================");
 
-                await SetArea(currentArea);
+                await Task.Delay(betweenHandshakeAndSetArea);
+                await SetArea(currentArea, betweenSetAreas);
                 CustomConsole.WriteLine("===========================");
 
                 //Allow some time for server to update area info
 
-                await Task.Delay(3000);
+                await Task.Delay(betweenAreasAndIniPuppet);
 
                 await SelectFirstAvailableINIPuppet();
                 CustomConsole.WriteLine("===========================");
@@ -370,7 +433,7 @@ namespace AOBot_Testing.Agents
                 _ = Task.Run(() => KeepAlive());
 
                 // Allow some time for connection
-                await Task.Delay(1000);
+                await Task.Delay(finalDelay);
             }
             catch (Exception ex)
             {
@@ -436,29 +499,46 @@ namespace AOBot_Testing.Agents
             isHandshakeComplete = true;
             CustomConsole.WriteLine("Handshake completed successfully!");
         }
+
+
+        private static SemaphoreSlim _reconnectQueue = new SemaphoreSlim(1, 1);
+
         private async Task Reconnect()
         {
-            int retryCount = 0;
-            while (retryCount < 5)
+            // Wait for our turn in the reconnection queue.
+            await _reconnectQueue.WaitAsync();
+            try
             {
-                try
+                int retryCount = 0;
+                while (retryCount < 5)
                 {
-                    await Connect();
-                    if (ws != null && ws.State == WebSocketState.Open)
+                    try
                     {
-                        CustomConsole.WriteLine("Reconnected to WebSocket!");
-                        return;
+                        OnReconnectionAttempt?.Invoke(retryCount + 1);
+                        await Connect(0, 0, 5000, 2000);
+                        if (ws != null && ws.State == WebSocketState.Open)
+                        {
+                            CustomConsole.WriteLine("Reconnected to WebSocket!");
+                            return;
+                        }
                     }
+                    catch (Exception ex)
+                    {
+                        OnReconnectionAttemptFailed?.Invoke(retryCount + 1);
+                        CustomConsole.WriteLine($"Reconnection attempt {retryCount + 1} failed: {ex.Message}");
+                    }
+                    retryCount++;
+                    await Task.Delay(2000); // Delay before retrying this client
                 }
-                catch (Exception ex)
-                {
-                    CustomConsole.WriteLine($"Reconnection attempt {retryCount + 1} failed: {ex.Message}");
-                }
-                retryCount++;
-                await Task.Delay(2000); // Wait before retrying
+                CustomConsole.WriteLine("Failed to reconnect after multiple attempts.");
+                await Disconnect();
             }
-            CustomConsole.WriteLine("Failed to reconnect after multiple attempts.");
-            await Disconnect();
+            finally
+            {
+                // Ensure a gap between different clients' reconnection attempts.
+                await Task.Delay(200);
+                _reconnectQueue.Release();
+            }
         }
         private async Task KeepAlive()
         {
@@ -502,7 +582,7 @@ namespace AOBot_Testing.Agents
 
         #region Helper methods
 
-        public async Task SelectFirstAvailableINIPuppet()
+        public async Task SelectFirstAvailableINIPuppet(bool iniswapToSelected = true)
         {
             if (ws == null || ws.State != WebSocketState.Open)
             {
@@ -525,9 +605,13 @@ namespace AOBot_Testing.Agents
                     {
                         await SendPacket($"CC#0#{i}#{hdid}#%");
 
-                        selectedCharacterIndex = i;
-                        CurrentINI = ini;
-                        ICShowname = CurrentINI?.ShowName ?? characterName;
+                        iniPuppetID = i;
+                        OnINIPuppetChange?.Invoke();
+                        if (iniswapToSelected)
+                        {
+                            CurrentINI = ini;
+                            ICShowname = CurrentINI?.ShowName ?? characterName;
+                        }
                         CustomConsole.WriteLine($"Selected INI Puppet: \"{characterName}\" (Server Index: {i})");
                         return;
                     }
@@ -597,6 +681,8 @@ namespace AOBot_Testing.Agents
                 if (ws == null || ws.State != WebSocketState.Open)
                 {
                     aliveTime.Stop();
+                    OnWebsocketDisconnect?.Invoke();
+
                     if (!dead)
                     {
                         CustomConsole.WriteLine("WebSocket connection lost. Attempting to reconnect...");
@@ -620,7 +706,7 @@ namespace AOBot_Testing.Agents
                         var prevImmediate = Immediate;
                         var prevAdditive = Additive;
                         var prevSelfOffset = SelfOffset;
-                        var prevSelectedCharacterIndex = selectedCharacterIndex;
+                        var prevSelectedCharacterIndex = iniPuppetID;
                         #endregion
 
                         await Reconnect();

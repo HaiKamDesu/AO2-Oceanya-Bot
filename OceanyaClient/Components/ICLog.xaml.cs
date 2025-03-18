@@ -16,6 +16,26 @@ namespace OceanyaClient.Components
         private Dictionary<AOClient, (FlowDocument log, bool inverted)> clientLogs = new();
         private AOClient currentClient = null;
         static bool InvertICLog { get; set; } = false;
+
+        private readonly List<FormatRule> formatRules = new()
+        {
+            new FormatRule { Name = ICMessage.TextColors.Green,    Start = '`', End = '`', ColorBrush = new SolidColorBrush(Color.FromRgb(0, 247, 0)), Remove = true },
+            new FormatRule { Name = ICMessage.TextColors.Red,      Start = '~', End = '~', ColorBrush = new SolidColorBrush(Color.FromRgb(247, 0, 57)), Remove = true },
+            new FormatRule { Name = ICMessage.TextColors.Orange,   Start = '|', End = '|', ColorBrush = new SolidColorBrush(Color.FromRgb(247, 115, 57)), Remove = true },
+            new FormatRule { Name = ICMessage.TextColors.Blue,     Start = '(', End = ')', ColorBrush = new SolidColorBrush(Color.FromRgb(107, 198, 247)), Remove = false },
+            new FormatRule { Name = ICMessage.TextColors.Yellow,   Start = 'º', End = 'º', ColorBrush = new SolidColorBrush(Color.FromRgb(247, 247, 0)), Remove = true },
+            new FormatRule { Name = ICMessage.TextColors.Magenta,  Start = '№', End = '№', ColorBrush = new SolidColorBrush(Color.FromRgb(247, 115, 247)), Remove = true },
+            new FormatRule { Name = ICMessage.TextColors.Cyan,     Start = '√', End = '√', ColorBrush = new SolidColorBrush(Color.FromRgb(128, 247, 247)), Remove = true },
+            new FormatRule { Name = ICMessage.TextColors.Gray,     Start = '[', End = ']', ColorBrush = new SolidColorBrush(Color.FromRgb(160, 181, 205)), Remove = false }
+        };
+        private class FormatRule
+        {
+            public ICMessage.TextColors Name { get; set; }
+            public char Start { get; set; }
+            public char End { get; set; }
+            public SolidColorBrush ColorBrush { get; set; }
+            public bool Remove { get; set; }
+        }
         public ICLog()
         {
             InitializeComponent();
@@ -50,10 +70,25 @@ namespace OceanyaClient.Components
                 LineHeight = 2
             };
 
-            Run nameRun = new Run($"{showName}: ") { FontWeight = FontWeights.Bold };
-            nameRun.Foreground = isSentFromSelf ? Brushes.LightCyan : Brushes.White;
-            paragraph.Inlines.Add(nameRun);
-            paragraph.Inlines.AddRange(FormatMessageText(message, textColor));
+            if (isSentFromSelf)
+            {
+                Run gmTag = new Run($"[GM] ") { FontWeight = FontWeights.Bold };
+                gmTag.Foreground = formatRules.First(x => x.Name == ICMessage.TextColors.Gray).ColorBrush;
+                paragraph.Inlines.Add(gmTag);
+
+                Run nameRun = new Run($"{showName}: ") { FontWeight = FontWeights.Bold };
+                nameRun.Foreground = new SolidColorBrush(Color.FromArgb(255, 154, 220, 225));
+                paragraph.Inlines.Add(nameRun);
+            }
+            else
+            {
+                Run nameRun = new Run($"{showName}: ") { FontWeight = FontWeights.Bold };
+                nameRun.Foreground = Brushes.White;
+                paragraph.Inlines.Add(nameRun);
+            }
+
+
+                paragraph.Inlines.AddRange(FormatMessageText(message, textColor));
 
             if (clientLogs[client].inverted)
             {
@@ -111,22 +146,10 @@ namespace OceanyaClient.Components
                 this.finished = finished;
             }
         }
+
         private List<Inline> FormatMessageText(string message, ICMessage.TextColors defaultColor)
         {
             var formattedRuns = new List<Inline>();
-            #region Define color formatting rules
-            var formatRules = new[]
-            {
-        new { Name = ICMessage.TextColors.Green,    Start = '`', End = '`', Color = new SolidColorBrush(Color.FromRgb(0, 247, 0)), Remove = true },
-        new { Name = ICMessage.TextColors.Red,      Start = '~', End = '~', Color = new SolidColorBrush(Color.FromRgb(247, 0, 57)), Remove = true },
-        new { Name = ICMessage.TextColors.Orange,   Start = '|', End = '|', Color = new SolidColorBrush(Color.FromRgb(247, 115, 57)), Remove = true },
-        new { Name = ICMessage.TextColors.Blue,     Start = '(', End = ')', Color = new SolidColorBrush(Color.FromRgb(107, 198, 247)), Remove = false },
-        new { Name = ICMessage.TextColors.Yellow,   Start = 'º', End = 'º', Color = new SolidColorBrush(Color.FromRgb(247, 247, 0)), Remove = true },
-        new { Name = ICMessage.TextColors.Magenta,  Start = '№', End = '№', Color = new SolidColorBrush(Color.FromRgb(247, 115, 247)), Remove = true },
-        new { Name = ICMessage.TextColors.Cyan,     Start = '√', End = '√', Color = new SolidColorBrush(Color.FromRgb(128, 247, 247)), Remove = true },
-        new { Name = ICMessage.TextColors.Gray,     Start = '[', End = ']', Color = new SolidColorBrush(Color.FromRgb(160, 181, 205)), Remove = false }
-    };
-            #endregion
 
             // Final output
             List<(string Text, ICMessage.TextColors Color)> segments = new();
@@ -223,7 +246,7 @@ namespace OceanyaClient.Components
                     }
                     else
                     {
-                        brush = formatRules.First(r => r.Name == segment.Color).Color;
+                        brush = formatRules.First(r => r.Name == segment.Color).ColorBrush;
                     }
 
                     formattedRuns.Add(new Run(segment.Text) { Foreground = brush });
@@ -280,4 +303,6 @@ namespace OceanyaClient.Components
             }
         }
     }
+
+    
 }
