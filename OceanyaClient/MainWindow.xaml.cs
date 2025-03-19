@@ -229,12 +229,36 @@ namespace OceanyaClient
                 ContextMenu contextMenu = new ContextMenu();
                 MenuItem renameMenuItem = new MenuItem { Header = "Rename Client" };
                 renameMenuItem.Click += (sender, args) => RenameClient(bot);
-
                 contextMenu.Items.Add(renameMenuItem);
 
-                MenuItem iniPuppetChange = new MenuItem { Header = "Select new INIPuppet" };
+                MenuItem iniPuppetChange = new MenuItem { Header = "Select INIPuppet (Automatic)" };
                 iniPuppetChange.Click += async (sender, args) => await bot.SelectFirstAvailableINIPuppet(false);
                 contextMenu.Items.Add(iniPuppetChange);
+
+                MenuItem manualIniPuppetChange = new MenuItem { Header = "Select INIPuppet (Manual)" };
+                manualIniPuppetChange.Click += async (sender, args) =>
+                {
+                    // Show an input dialog to the user
+                    string newClientName = ShowInputDialog("Enter INIPuppet name:");
+
+                    if (!string.IsNullOrWhiteSpace(newClientName))
+                    {
+                        try
+                        {
+                            await bot.SelectIniPuppet(newClientName, false);
+                        }
+                        catch(Exception e)
+                        {
+                            OceanyaMessageBox.Show(e.Message, "INIPuppet Selection Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                        }
+                    }
+                };
+                contextMenu.Items.Add(manualIniPuppetChange);
+
+                MenuItem reconnectMenuItem = new MenuItem { Header = "Reconnect" };
+                reconnectMenuItem.Click += async (sender, args) => await bot.DisconnectWebsocket();
+                contextMenu.Items.Add(reconnectMenuItem);
+
 
                 toggleBtn.ContextMenu = contextMenu;
                 #endregion
@@ -337,8 +361,8 @@ namespace OceanyaClient
                 {
                     Dispatcher.Invoke(() =>
                     {
-                        ICLogControl.AddMessage(bot, "Oceanya Client", "Disconnected from server.", true, ICMessage.TextColors.Red);
-                        OOCLogControl.AddMessage(bot, "Oceanya Client", "Disconnected from server.", true);
+                        ICLogControl.AddMessage(bot, "Oceanya Client", "Websocket Disconnected.", true, ICMessage.TextColors.Red);
+                        OOCLogControl.AddMessage(bot, "Oceanya Client", "Websocket Disconnected.", true);
                     });
                 };
                 bot.OnReconnectionAttempt += (int attemptCount) =>
@@ -355,7 +379,7 @@ namespace OceanyaClient
                     Dispatcher.Invoke(() =>
                     {
                         string message = $"Attempt {attemptCount} failed.";
-                        ICLogControl.AddMessage(bot, "Oceanya Client", message, true, ICMessage.TextColors.Red);
+                        ICLogControl.AddMessage(bot, "Oceanya Client", message, true, ICMessage.TextColors.Yellow);
                         OOCLogControl.AddMessage(bot, "Oceanya Client", message, true);
                     });
                 };
@@ -802,7 +826,7 @@ namespace OceanyaClient
         {
             foreach (var item in clients.Values)
             {
-                await item.SimulateInternetConnectionIssue();
+                await item.DisconnectWebsocket();
             }
         }
 

@@ -385,7 +385,10 @@ namespace AOBot_Testing.Agents
                 var fields = message.Split("#");
                 var newPos = fields[1];
 
-                SetPos(newPos);
+                if (!string.IsNullOrEmpty(newPos))
+                {
+                    SetPos(newPos);
+                }
             }
             else if (message.StartsWith("BN#"))
             {
@@ -524,9 +527,10 @@ namespace AOBot_Testing.Agents
                     }
                     catch (Exception ex)
                     {
-                        OnReconnectionAttemptFailed?.Invoke(retryCount + 1);
+                        
                         CustomConsole.WriteLine($"Reconnection attempt {retryCount + 1} failed: {ex.Message}");
                     }
+                    OnReconnectionAttemptFailed?.Invoke(retryCount + 1);
                     retryCount++;
                     await Task.Delay(2000); // Delay before retrying this client
                 }
@@ -552,22 +556,23 @@ namespace AOBot_Testing.Agents
 
         public async Task Disconnect()
         {
+            dead = true;
             if (ws != null && ws.State == WebSocketState.Open)
             {
-                dead = true;
                 await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnecting", CancellationToken.None);
                 ws.Dispose();
                 ws = null;
                 CustomConsole.WriteLine("Disconnected from WebSocket.");
-                OnDisconnect?.Invoke();
             }
             else
             {
                 CustomConsole.WriteLine("WebSocket is not connected.");
             }
+
+            OnDisconnect?.Invoke();
         }
 
-        public async Task SimulateInternetConnectionIssue()
+        public async Task DisconnectWebsocket()
         {
             if (ws != null && ws.State == WebSocketState.Open)
             {
@@ -603,22 +608,59 @@ namespace AOBot_Testing.Agents
                     //if the ini is null, it means you dont have it in your pc, meaning keep looking for an available one you DO have.
                     if (ini != null)
                     {
-                        await SendPacket($"CC#0#{i}#{hdid}#%");
-
-                        iniPuppetID = i;
-                        OnINIPuppetChange?.Invoke();
-                        if (iniswapToSelected)
-                        {
-                            CurrentINI = ini;
-                            ICShowname = CurrentINI?.ShowName ?? characterName;
-                        }
-                        CustomConsole.WriteLine($"Selected INI Puppet: \"{characterName}\" (Server Index: {i})");
+                        await SelectIniPuppet(i, iniswapToSelected);
                         return;
                     }
                 }
             }
 
             CustomConsole.WriteLine("No available INI Puppets to select.");
+        }
+
+        public async Task SelectIniPuppet(string iniPuppetName, bool iniswapToSelected = true)
+        {
+            var serverCharID = 0;
+            foreach (var kvp in serverCharacterList)
+            {
+                var name = kvp.Key;
+                var available = kvp.Value;
+                if (name.ToLower() == iniPuppetName.Trim().ToLower())
+                {
+                    if (!available)
+                    {
+                        throw new Exception($"Character \"{iniPuppetName}\" is already taken!");
+                    }
+                    else
+                    {
+                        await SelectIniPuppet(serverCharID, iniswapToSelected);
+                        return;
+                    }
+                        
+                }
+                serverCharID++;
+            }
+
+            throw new Exception($"Character \"{iniPuppetName}\" not found in server character list.");
+        }
+        public async Task SelectIniPuppet(int serverCharID, bool iniswapToSelected = true)
+        {
+            await SendPacket($"CC#0#{serverCharID}#{hdid}#%");
+
+            var characterName = serverCharacterList.ElementAt(serverCharID).Key;
+
+            var ini = CharacterINI.FullList.FirstOrDefault(c => c.Name == characterName);
+
+            if (ini != null)
+            {
+                iniPuppetID = serverCharID;
+                OnINIPuppetChange?.Invoke();
+                if (iniswapToSelected)
+                {
+                    CurrentINI = ini;
+                    ICShowname = CurrentINI?.ShowName ?? characterName;
+                }
+                CustomConsole.WriteLine($"Selected INI Puppet: \"{characterName}\" (Server Index: {serverCharID})");
+            }
         }
 
         public async Task SendPacket(string packet)
