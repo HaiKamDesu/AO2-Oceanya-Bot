@@ -49,6 +49,19 @@ namespace OceanyaClient.Components
             UpdateGridContent();
         }
 
+        public void SetPageToElement(UIElement element)
+        {
+            if(elements.Contains(element))
+            {
+                int index = elements.IndexOf(element);
+                currentPage = index / (rows * columns);
+                UpdateGridContent();
+            }
+            else
+            {
+                throw new Exception("Element not found in grid.");
+            }
+        }
         public void SetNavigationButtonColors(Brush background, Brush foreground)
         {
             UpButton.Background = background;

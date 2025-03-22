@@ -129,9 +129,29 @@ namespace OceanyaClient
                     {
                         _instance.WindowStartupLocation = WindowStartupLocation.Manual;
 
+                        // Safely retrieve ownerWindow visibility and position
+                        double ownerLeft = 0;
+                        double ownerTop = 0;
+                        double ownerWidth = 0;
+                        double ownerHeight = 0;
+
+                        owner.Dispatcher.Invoke(() =>
+                        {
+                            if (owner.IsVisible)
+                            {
+                                owner.UpdateLayout();
+                                owner.Dispatcher.Invoke(() =>
+                                {
+                                    ownerHeight = owner.ActualHeight;
+                                    ownerWidth = owner.ActualWidth;
+                                    ownerLeft = owner.Left;
+                                    ownerTop = owner.Top;
+                                });
+                            }
+                        });
                         Point ownerCenter = new Point(
-                            owner.Left + (owner.Width / 2),
-                            owner.Top + (owner.Height / 2));
+                            ownerLeft + (ownerWidth / 2),
+                            ownerTop + (ownerHeight / 2));
 
                         _instance.Left = ownerCenter.X - (_instance.Width / 2);
                         _instance.Top = ownerCenter.Y - (_instance.Height / 2);

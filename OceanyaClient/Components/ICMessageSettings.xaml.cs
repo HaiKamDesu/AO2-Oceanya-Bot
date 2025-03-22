@@ -29,7 +29,8 @@ namespace OceanyaClient.Components
     /// </summary>
     public partial class ICMessageSettings : UserControl
     {
-
+        public static int ICShownameMaxLength = 22;
+        public static int ICMessageMaxLength = 256;
         Dictionary<Emote, ToggleButton> emotes = new();
         AOClient curClient;
         public bool stickyEffects;
@@ -82,6 +83,9 @@ namespace OceanyaClient.Components
             EffectDropdown.OnConfirm += EffectDropdown_OnConfirm;
 
             sfxDropdown.SetImageFieldVisible(false);
+
+            txtICShowname.MaxLength = ICShownameMaxLength;
+            txtICMessage.MaxLength = ICMessageMaxLength;
         }
 
         public void ReinitializeSettings()

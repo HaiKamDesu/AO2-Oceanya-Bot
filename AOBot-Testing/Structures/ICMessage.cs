@@ -226,7 +226,7 @@ namespace AOBot_Testing.Structures
                     Flip = parts[13] == "1",
                     Realization = parts[14] == "1",
                     TextColor = int.TryParse(parts[15], out int textColor) ? (TextColors)textColor : TextColors.White,
-                    ShowName = string.IsNullOrEmpty(parts[16]) ? CharacterINI.FullList.First(ini => ini.Name == parts[3]).ShowName : parts[16],
+                    ShowName = string.IsNullOrEmpty(parts[16]) ? CharacterINI.FullList.First(ini => ini.Name == parts[3]).ShowName : Globals.ReplaceTextForSymbols(parts[16]),
                     OtherCharId = int.TryParse(parts[17], out int otherCharId) ? otherCharId : -1,
                     OtherName = parts[18],
                     OtherEmote = parts[19],
@@ -270,7 +270,7 @@ namespace AOBot_Testing.Structures
                     $"{(message.Flip ? "1" : "0")}#" +
                     $"{(message.Realization ? "1" : "0")}#" +
                     $"{(int)message.TextColor}#" +
-                    $"{message.ShowName}#" +
+                    $"{Globals.ReplaceSymbolsForText(message.ShowName)}#" +
                     $"{message.OtherCharId}#" +
                     $"{message.SelfOffset.Horizontal}<and>{message.SelfOffset.Vertical}#" +
                     $"{(message.NonInterruptingPreAnim ? "1" : "0")}#" + // Changed to bool

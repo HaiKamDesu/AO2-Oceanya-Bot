@@ -1,5 +1,6 @@
 ﻿using AOBot_Testing.Structures;
 using Microsoft.Win32;
+using OceanyaClient.Components;
 using System;
 using System.Collections.Generic;
 using System.IO;
@@ -68,15 +69,14 @@ namespace OceanyaClient
                 return;
             }
 
-            
+
             // Save to settings or use as needed
             try
             {
-                Globals.BaseFolders = Globals.GetBaseFolders(configIniPath);
-                Globals.PathToConfigINI = configIniPath;
+                Globals.UpdateConfigINI(configIniPath);
                 Globals.ConnectionString = connectionPath;
             }
-            catch(Exception ex)
+            catch (Exception ex)
             {
                 OceanyaMessageBox.Show("Error updating base folders: " + ex.Message,
                                 "Error", MessageBoxButton.OK, MessageBoxImage.Error);

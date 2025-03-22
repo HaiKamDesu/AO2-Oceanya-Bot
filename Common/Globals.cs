@@ -1,4 +1,5 @@
-﻿using System;
+﻿using OceanyaClient;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -10,6 +11,10 @@ public static class Globals
     public static string PathToConfigINI = "";
     public static List<string> BaseFolders = new List<string>();
     public static string ConnectionString = "Basement/testing";
+
+    public static int LogMaxMessages = 0;
+
+
     public enum Servers { ChillAndDices, Vanilla, CaseCafe }
     public static Dictionary<Servers, string> IPs = LoadServerIPs();
 
@@ -133,6 +138,20 @@ Each of these settings has predefined integer values. **If a change is requested
         { "<num>", "#" },
         { "<and>", "&" },
     };
+
+    public static void UpdateConfigINI(string pathToConfigINI)
+    {
+        PathToConfigINI = pathToConfigINI;
+        BaseFolders = GetBaseFolders(pathToConfigINI);
+
+        foreach (string line in File.ReadLines(Globals.PathToConfigINI))
+        {
+            if (line.StartsWith("log_maximum="))
+            {
+               LogMaxMessages = int.Parse(line.Substring("log_maximum=".Length).Trim());
+            }
+        }
+    }
     public static List<string> GetBaseFolders(string pathToConfigINI)
     {
         string mountPathsRaw = "";
@@ -142,6 +161,10 @@ Each of these settings has predefined integer values. **If a change is requested
             {
                 mountPathsRaw = line.Substring("mount_paths=".Length).Trim();
                 break;
+            }
+            else if (line.StartsWith("log_maximum="))
+            {
+                SaveFile.Data.LogMaxMessages = int.Parse(line.Substring("log_maximum=".Length).Trim());
             }
         }
 

@@ -15,6 +15,7 @@ namespace OceanyaClient
         public bool StickyEffect { get; set; } = false;
         public bool SwitchPosOnIniSwap { get; set; } = false;
         public bool InvertICLog { get; set; } = false;
+        public int LogMaxMessages { get; set; } = 0;
     }
 
     public static class SaveFile

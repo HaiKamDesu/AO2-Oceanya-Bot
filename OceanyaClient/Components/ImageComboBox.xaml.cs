@@ -52,7 +52,6 @@ namespace OceanyaClient.Components
         private bool isInternalUpdate = false;
         private string lastConfirmedText = string.Empty;
 
-        // Modify the FilterDropdown method
         private void FilterDropdown(string input)
         {
             // Don't filter if we're in the middle of an internal update
@@ -65,14 +64,30 @@ namespace OceanyaClient.Components
 
             // Update the dropdown items without changing the text
             isInternalUpdate = true;
+            string currentText = cboINISelect.Text; // Store current text
+            int selectionStart = editableTextBox?.SelectionStart ?? 0;
+            int selectionLength = editableTextBox?.SelectionLength ?? 0;
+
             cboINISelect.ItemsSource = filteredItems;
+
+            // Preserve text and selection
+            if (!string.IsNullOrEmpty(currentText))
+            {
+                cboINISelect.Text = currentText;
+                if (editableTextBox != null)
+                {
+                    editableTextBox.SelectionStart = selectionStart;
+                    editableTextBox.SelectionLength = selectionLength;
+                }
+            }
+
             isInternalUpdate = false;
 
-            // Only open dropdown if we have items and user is actively typing
+            // Only open dropdown if we have items
             cboINISelect.IsDropDownOpen = filteredItems.Count > 0;
         }
 
-        // Update the TextChanged handler
+        // Modify the cboINISelect_TextChanged handler
         private void cboINISelect_TextChanged(object sender, TextChangedEventArgs e)
         {
             if (isReadOnly || isInternalUpdate) return;
@@ -84,9 +99,19 @@ namespace OceanyaClient.Components
             // Filter dropdown based on current text
             FilterDropdown(editableTextBox.Text);
 
-            // Restore selection after filtering
-            editableTextBox.SelectionStart = selectionStart;
-            editableTextBox.SelectionLength = selectionLength;
+            // Restore selection after filtering, but only if we haven't completely changed the text
+            // When a user types a character after all text is selected, we want the cursor to be after that character
+            if (!(selectionLength == lastConfirmedText.Length && editableTextBox.Text.Length == 1))
+            {
+                editableTextBox.SelectionStart = selectionStart;
+                editableTextBox.SelectionLength = selectionLength;
+            }
+            else
+            {
+                // If we've replaced all text with a single character, put cursor at the end
+                editableTextBox.SelectionStart = editableTextBox.Text.Length;
+                editableTextBox.SelectionLength = 0;
+            }
         }
 
         // Update the SelectionChanged handler to prevent unwanted selections
@@ -140,7 +165,7 @@ namespace OceanyaClient.Components
                 cboINISelect.ItemsSource = allItems;
             }), System.Windows.Threading.DispatcherPriority.Background);
 
-            
+
         }
 
         // Modify the LostFocus handler to be less disruptive
@@ -183,21 +208,95 @@ namespace OceanyaClient.Components
 
 
 
+        // Update the existing PreviewKeyDown handler
         private void cboINISelect_PreviewKeyDown(object sender, KeyEventArgs e)
         {
+            if (isReadOnly)
+            {
+                e.Handled = true;
+                return;
+            }
+
             if (e.Key == Key.Enter)
             {
-                
+                e.Handled = true;
+
+                var match = allItems.FirstOrDefault(item => item.Name.StartsWith(cboINISelect.Text, StringComparison.OrdinalIgnoreCase));
+                if (match != null)
+                {
+                    ConfirmSelection(match.Name);
+                }
+                else
+                {
+                    ConfirmSelection(cboINISelect.Text);
+                }
+
+                cboINISelect.IsDropDownOpen = false;
+            }
+            // Handle single character input when all text is selected
+            else if (editableTextBox != null &&
+                    !e.Key.IsModifierKey() &&
+                    editableTextBox.SelectionLength == editableTextBox.Text.Length &&
+                    editableTextBox.SelectionLength > 0)
+            {
+                // For printable characters only
+                if ((e.Key >= Key.A && e.Key <= Key.Z) ||
+                    (e.Key >= Key.D0 && e.Key <= Key.D9) ||
+                    (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9) ||
+                    e.Key == Key.Space ||
+                    e.Key == Key.OemMinus ||
+                    e.Key == Key.OemPeriod ||
+                    e.Key == Key.OemQuestion ||
+                    (e.Key >= Key.Oem1 && e.Key <= Key.OemBackslash))
+                {
+                    // Get the character that would be entered
+                    string key = e.Key.ToString();
+
+                    // Handle letter keys
+                    if (key.Length == 1 || (e.Key >= Key.A && e.Key <= Key.Z))
+                    {
+                        isInternalUpdate = true;
+
+                        // For letters, need to handle shift for uppercase
+                        if (e.Key >= Key.A && e.Key <= Key.Z)
+                        {
+                            key = ((char)('a' + (e.Key - Key.A))).ToString();
+
+                            // Handle uppercase if shift is pressed
+                            if (Keyboard.IsKeyDown(Key.LeftShift) || Keyboard.IsKeyDown(Key.RightShift))
+                            {
+                                key = key.ToUpper();
+                            }
+                        }
+                        // Handle numbers and symbols
+                        else if (e.Key >= Key.D0 && e.Key <= Key.D9)
+                        {
+                            key = ((char)('0' + (e.Key - Key.D0))).ToString();
+                        }
+                        else if (e.Key >= Key.NumPad0 && e.Key <= Key.NumPad9)
+                        {
+                            key = ((char)('0' + (e.Key - Key.NumPad0))).ToString();
+                        }
+
+                        // Set new text and position cursor at end
+                        editableTextBox.Text = key;
+                        editableTextBox.SelectionStart = 1;
+                        editableTextBox.SelectionLength = 0;
+
+                        // Filter dropdown with new text
+                        FilterDropdown(key);
+
+                        isInternalUpdate = false;
+                        e.Handled = true; // Prevent default handling
+                    }
+                }
             }
         }
-
-
-
 
         public string SelectedText
         {
             get => cboINISelect.Text;
-            set 
+            set
             {
                 var prevFocusable = editableTextBox.Focusable;
                 editableTextBox.Focusable = false;
@@ -295,6 +394,18 @@ namespace OceanyaClient.Components
             }
         }
 
-        
+
+    }
+
+    // Add this extension method to Key enum
+    public static class KeyExtensions
+    {
+        public static bool IsModifierKey(this Key key)
+        {
+            return key == Key.LeftShift || key == Key.RightShift ||
+                   key == Key.LeftCtrl || key == Key.RightCtrl ||
+                   key == Key.LeftAlt || key == Key.RightAlt ||
+                   key == Key.LWin || key == Key.RWin;
+        }
     }
 }

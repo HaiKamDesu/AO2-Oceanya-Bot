@@ -467,6 +467,7 @@ namespace OceanyaClient
                 if (clients[button] == client)
                 {
                     button.IsChecked = true;
+                    EmoteGrid.SetPageToElement(button);
                     break;
                 }
             }
@@ -797,8 +798,10 @@ namespace OceanyaClient
             var result = OceanyaMessageBox.Show("Are you sure you want to refresh your client assets? (This process may take a while)", "Refresh all Assets", MessageBoxButton.YesNo, MessageBoxImage.Information);
 
             if (result != MessageBoxResult.Yes) return;
-            Globals.BaseFolders = Globals.GetBaseFolders(Globals.PathToConfigINI);
+            
             await WaitForm.ShowFormAsync("Refreshing character and background info...", this);
+
+            Globals.UpdateConfigINI(Globals.PathToConfigINI);
             CharacterINI.RefreshCharacterList
                 (
                     onParsedCharacter:
@@ -856,5 +859,48 @@ namespace OceanyaClient
                 SaveFile.Save();
             }
         }
+
+        private void THEDINGBUTTON_Click(object sender, RoutedEventArgs e)
+        {
+            AudioPlayer.PlayEmbeddedSound("Resources/BellDing.mp3", 0.25f);
+        }
+
+        protected override void OnPreviewKeyDown(KeyEventArgs e)
+        {
+            // Check if the Control key is pressed
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            {
+                int index = -1;
+
+                // Check if the key is a digit (main keys or numpad)
+                if (e.Key >= Key.D1 && e.Key <= Key.D9)
+                {
+                    index = e.Key - Key.D1;
+                }
+                else if(e.Key == Key.D0)
+                {
+                    index = 9;
+                }
+                else if (e.Key >= Key.NumPad1 && e.Key <= Key.NumPad9)
+                {
+                    index = e.Key - Key.NumPad1;
+                }
+                else if (e.Key == Key.D0)
+                {
+                    index = 9;
+                }
+
+                // If the index is valid and there is a corresponding client, select it
+                if (index >= 0 && index < clients.Count)
+                {
+                    AOClient client = clients.Values.ElementAt(index);
+                    SelectClient(client);
+                    e.Handled = true; // Prevent further handling if necessary
+                }
+            }
+
+            base.OnPreviewKeyDown(e);
+        }
+
     }
 }

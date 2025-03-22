@@ -3,20 +3,18 @@
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:components="clr-namespace:OceanyaClient.Components"
     Width="225" Height="323">
-
     <Grid>
         <DockPanel LastChildFill="True">
             <DockPanel x:Name="dockInputSection" DockPanel.Dock="Bottom" LastChildFill="False" Height="36">
                 <!-- OOC Message -->
                 <Grid x:Name="grdOOCMessage" Canvas.Top="30" Height="18" DockPanel.Dock="Top">
-                    <TextBox x:Name="txtOOCMessage" TextWrapping="Wrap"
+                    <TextBox x:Name="txtOOCMessage"
                          BorderBrush="White" Background="#FF575757"
                          FontFamily="pack://application:,,,/Resources/Fonts/#Igiari Cyrillic"
                          Foreground="White"
                          VerticalContentAlignment="Center"
                          KeyDown="txtOOCMessage_KeyDown"
                          TextChanged="txtOOCMessage_TextChanged" Grid.ColumnSpan="2"/>
-
                     <!-- Placeholder -->
                     <TextBlock x:Name="txtOOCMessage_Placeholder"
                        Text="Message out-of-character"
@@ -28,14 +26,13 @@
                 <DockPanel x:Name="dockShownameButton" LastChildFill="True" DockPanel.Dock="Bottom" Height="17">
                     <!-- OOC Showname -->
                     <Grid x:Name="grdOOCShowname" Canvas.Top="47" Height="17" Width="93">
-                        <TextBox x:Name="txtOOCShowname" TextWrapping="Wrap"
+                        <TextBox x:Name="txtOOCShowname"
                             Width="93"
                             BorderBrush="White" Background="#FF575757"
                             FontFamily="pack://application:,,,/Resources/Fonts/#Igiari Cyrillic"
                             Foreground="White"
                             VerticalContentAlignment="Center"
                             TextChanged="txtOOCShowname_TextChanged"/>
-
                         <!-- Placeholder -->
                         <TextBlock x:Name="txtOOCShowname_Placeholder"
                             Text="OOCName"
@@ -47,7 +44,6 @@
                     <Button x:Name="btnServerConsole" Content="Server Console" FontSize="10" FontFamily="pack://application:,,,/Resources/Fonts/#Igiari Cyrillic" DockPanel.Dock="Right"/>
                 </DockPanel>
             </DockPanel>
-
             <!-- This Grid will automatically fill the remaining space -->
             <Grid>
                 <RichTextBox x:Name="LogBox"
@@ -64,14 +60,12 @@
                         <Paragraph TextAlignment="Left"/>
                     </FlowDocument>
                 </RichTextBox>
-
                 <Label x:Name="lblStream" Content="[STREAM]" 
            Background="#7F000000" Foreground="White" 
            FontFamily="Arial" VerticalContentAlignment="Center" 
            Height="24" VerticalAlignment="Top"
            HorizontalAlignment="Stretch"/>
             </Grid>
-
         </DockPanel>
     </Grid>
 </UserControl>

@@ -223,7 +223,7 @@ namespace AOBot_Testing.Agents
             if (ws != null && ws.State == WebSocketState.Open)
             {
                 OOCShowname = showname;
-                string oocMessage = $"CT#{showname}#{Globals.ReplaceSymbolsForText(message)}#%";
+                string oocMessage = $"CT#{Globals.ReplaceSymbolsForText(showname)}#{Globals.ReplaceSymbolsForText(message)}#%";
                 await SendPacket(oocMessage);
                 await Task.Delay(500);
             }
@@ -366,7 +366,7 @@ namespace AOBot_Testing.Agents
             else if (message.StartsWith("CT#"))
             {
                 var fields = message.Split("#");
-                var showname = fields[1];
+                var showname = Globals.ReplaceTextForSymbols(fields[1]);
                 var messageText = Globals.ReplaceTextForSymbols(fields[2]);
                 var fromServer = fields[3].ToString() == "1";
 

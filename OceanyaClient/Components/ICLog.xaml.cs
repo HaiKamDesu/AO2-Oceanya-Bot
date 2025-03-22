@@ -13,6 +13,8 @@ namespace OceanyaClient.Components
 {
     public partial class ICLog : UserControl
     {
+        private static int LogMaxMessages => Globals.LogMaxMessages;
+
         private Dictionary<AOClient, (FlowDocument log, bool inverted)> clientLogs = new();
         private AOClient currentClient = null;
         static bool InvertICLog { get; set; } = false;
@@ -72,7 +74,7 @@ namespace OceanyaClient.Components
 
             if (isSentFromSelf)
             {
-                Run gmTag = new Run($"[GM] ") { FontWeight = FontWeights.Bold };
+                Run gmTag = new Run("[GM] ") { FontWeight = FontWeights.Bold };
                 gmTag.Foreground = formatRules.First(x => x.Name == ICMessage.TextColors.Gray).ColorBrush;
                 paragraph.Inlines.Add(gmTag);
 
@@ -87,22 +89,38 @@ namespace OceanyaClient.Components
                 paragraph.Inlines.Add(nameRun);
             }
 
+            paragraph.Inlines.AddRange(FormatMessageText(message, textColor));
 
-                paragraph.Inlines.AddRange(FormatMessageText(message, textColor));
-
+            // Add the new paragraph based on whether the log is inverted.
             if (clientLogs[client].inverted)
             {
                 if (log.Blocks.Count == 0)
-                {
                     log.Blocks.Add(paragraph);
-                }
                 else
-                {
                     log.Blocks.InsertBefore(log.Blocks.FirstBlock, paragraph);
+
+                // For inverted logs, remove the oldest block (at the bottom) if limit is exceeded.
+                if (LogMaxMessages != 0 && log.Blocks.Count > LogMaxMessages)
+                {
+                    while (log.Blocks.Count > LogMaxMessages)
+                    {
+                        log.Blocks.Remove(log.Blocks.LastBlock);
+                    }
                 }
             }
             else
+            {
                 log.Blocks.Add(paragraph);
+
+                // For non-inverted logs, remove the oldest block (at the top) if limit is exceeded.
+                if (LogMaxMessages != 0 && log.Blocks.Count > LogMaxMessages)
+                {
+                    while (log.Blocks.Count > LogMaxMessages)
+                    {
+                        log.Blocks.Remove(log.Blocks.FirstBlock);
+                    }
+                }
+            }
 
             if (client == currentClient && shouldScroll)
             {

@@ -379,6 +379,36 @@
                     Width="127" Height="16" BorderBrush="Black" 
                     Checked="chkInvertLog_Checked" Unchecked="chkInvertLog_Checked" 
                     Canvas.Left="229" Focusable="False" IsTabStop="False" VerticalContentAlignment="Center" HorizontalAlignment="Center" VerticalAlignment="Top"/>
+                <Button x:Name="THEDINGBUTTON" Height="12" Width="12" 
+                    BorderBrush="{x:Null}" Foreground="{x:Null}" Padding="0"
+                    Canvas.Left="322" Canvas.Top="532"
+                    Click="THEDINGBUTTON_Click" HorizontalAlignment="Left" VerticalAlignment="Top">
+                    <Button.Style>
+                        <Style TargetType="{x:Type Button}">
+                            <Setter Property="Template">
+                                <Setter.Value>
+                                    <ControlTemplate TargetType="{x:Type Button}">
+                                        <Grid>
+                                            <Rectangle x:Name="ButtonImage" Stretch="Fill" Fill="#FF36393F">
+                                                <Rectangle.OpacityMask>
+                                                    <ImageBrush ImageSource="/Resources/Buttons/Ding.png"/>
+                                                </Rectangle.OpacityMask>
+                                            </Rectangle>
+                                        </Grid>
+                                        <ControlTemplate.Triggers>
+                                            <Trigger Property="IsMouseOver" Value="True">
+                                                <Setter TargetName="ButtonImage" Property="Opacity" Value="0.7"/>
+                                            </Trigger>
+                                            <Trigger Property="IsEnabled" Value="False">
+                                                <Setter TargetName="ButtonImage" Property="Opacity" Value="0.3"/>
+                                            </Trigger>
+                                        </ControlTemplate.Triggers>
+                                    </ControlTemplate>
+                                </Setter.Value>
+                            </Setter>
+                        </Style>
+                    </Button.Style>
+                </Button>
             </Canvas>
         </Grid>
     </Border>

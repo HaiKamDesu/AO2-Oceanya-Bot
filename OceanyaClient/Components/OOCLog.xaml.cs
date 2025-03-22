@@ -1,16 +1,19 @@
 ﻿using AOBot_Testing.Agents;
 using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Navigation;
 
 namespace OceanyaClient.Components
 {
     public partial class OOCLog : UserControl
     {
+        public static int OOCShownameLengthLimit = 30;
         public Action<string, string> OnSendOOCMessage;
 
         private Dictionary<AOClient, FlowDocument> clientLogs = new Dictionary<AOClient, FlowDocument>();
@@ -18,12 +21,16 @@ namespace OceanyaClient.Components
         private AOClient currentClient = null;
         private ScrollViewer ScrollViewer;
 
+        // URL detection regex pattern
+        private static readonly Regex UrlRegex = new Regex(@"(https?:\/\/[^\s]+)", RegexOptions.Compiled | RegexOptions.IgnoreCase);
+
         public OOCLog()
         {
             InitializeComponent();
             LogBox.Document = new FlowDocument();
 
             Loaded += OOCLog_Loaded;
+            txtOOCShowname.MaxLength = OOCShownameLengthLimit;
         }
 
         private void OOCLog_Loaded(object sender, RoutedEventArgs e)
@@ -79,7 +86,9 @@ namespace OceanyaClient.Components
                 : Brushes.DarkBlue;
 
             paragraph.Inlines.Add(nameRun);
-            paragraph.Inlines.Add(new Run(message));
+
+            // Process the message to detect and convert URLs to hyperlinks
+            AddTextWithHyperlinks(paragraph, message);
 
             clientDoc.Blocks.Add(paragraph);
 
@@ -88,6 +97,66 @@ namespace OceanyaClient.Components
                 LogBox.Document = clientDoc;
                 if (shouldScroll)
                     ScrollToBottom();
+            }
+        }
+
+        private void AddTextWithHyperlinks(Paragraph paragraph, string text)
+        {
+            // Find all URLs in the text
+            var matches = UrlRegex.Matches(text);
+
+            if (matches.Count == 0)
+            {
+                // No URLs, just add the text
+                paragraph.Inlines.Add(new Run(text));
+                return;
+            }
+
+            int lastIndex = 0;
+            foreach (Match match in matches)
+            {
+                // Add text before the URL
+                if (match.Index > lastIndex)
+                {
+                    string beforeText = text.Substring(lastIndex, match.Index - lastIndex);
+                    paragraph.Inlines.Add(new Run(beforeText));
+                }
+
+                // Create and add the hyperlink
+                string url = match.Value;
+                Hyperlink hyperlink = new Hyperlink(new Run(url))
+                {
+                    NavigateUri = new Uri(url)
+                };
+                hyperlink.RequestNavigate += Hyperlink_RequestNavigate;
+                paragraph.Inlines.Add(hyperlink);
+
+                lastIndex = match.Index + match.Length;
+            }
+
+            // Add any remaining text after the last URL
+            if (lastIndex < text.Length)
+            {
+                string afterText = text.Substring(lastIndex);
+                paragraph.Inlines.Add(new Run(afterText));
+            }
+        }
+
+        private void Hyperlink_RequestNavigate(object sender, RequestNavigateEventArgs e)
+        {
+            try
+            {
+                // Open the URL in the default browser
+                System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+                {
+                    FileName = e.Uri.AbsoluteUri,
+                    UseShellExecute = true
+                });
+                e.Handled = true;
+            }
+            catch (Exception ex)
+            {
+                DisplayMessage("System", $"Failed to open URL: {ex.Message}", true);
             }
         }
 
