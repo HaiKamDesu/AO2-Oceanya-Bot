@@ -83,9 +83,16 @@ namespace OceanyaClient.Components
             EffectDropdown.OnConfirm += EffectDropdown_OnConfirm;
 
             sfxDropdown.SetImageFieldVisible(false);
+            sfxDropdown.OnConfirm += SfxDropdown_OnConfirm;
 
             txtICShowname.MaxLength = ICShownameMaxLength;
             txtICMessage.MaxLength = ICMessageMaxLength;
+        }
+
+        private void SfxDropdown_OnConfirm(object? sender, string sfx)
+        {
+            txtICMessage.Focus();
+            curClient.curSFX = sfx;
         }
 
         public void ReinitializeSettings()
@@ -128,6 +135,7 @@ namespace OceanyaClient.Components
             if (Enum.TryParse(newEffect, out ICMessage.Effects parsedEffect))
             {
                 curClient.effect = parsedEffect;
+                txtICMessage.Focus();
             }
             else
             {
@@ -143,6 +151,7 @@ namespace OceanyaClient.Components
             if (Enum.TryParse(newColor, out ICMessage.TextColors parsedColor))
             {
                 curClient.textColor = parsedColor;
+                txtICMessage.Focus();
             }
             else
             {
@@ -156,6 +165,7 @@ namespace OceanyaClient.Components
             if (curClient == null) return;
 
             curClient.SetPos(newPos);
+            txtICMessage.Focus();
         }
 
         private void EmoteDropdown_OnConfirm(object? sender, string emoteDisplayID)
@@ -164,6 +174,7 @@ namespace OceanyaClient.Components
             var emote = emotes.FirstOrDefault(x => x.Key.DisplayID == emoteDisplayID).Value;
             if (emote == null) return;
             emote.IsChecked = true;
+            txtICMessage.Focus();
         }
 
         private void CharacterDropdown_OnConfirm(object? sender, string iniName)
@@ -171,6 +182,8 @@ namespace OceanyaClient.Components
             var ini = CharacterINI.FullList.FirstOrDefault(x => x.Name == iniName);
             if(ini != null)
             {
+                txtICMessage.Focus();
+
                 if (curClient.currentINI == ini) return;
 
                 curClient.SetCharacter(ini);
@@ -240,7 +253,10 @@ namespace OceanyaClient.Components
                     }
                     else
                     {
-                        PositionDropdown.SelectedText = allPos.First().Key;
+                        if(allPos.Count > 0)
+                        {
+                            PositionDropdown.SelectedText = allPos.First().Key;
+                        }
                     }
                 }
                 else
@@ -271,6 +287,21 @@ namespace OceanyaClient.Components
             }
 
             emotes.First(x => x.Key.DisplayID == curClient.currentEmote.DisplayID).Value.IsChecked = true;
+
+
+            sfxDropdown.Clear();
+            sfxDropdown.Add("Default", "");
+            sfxDropdown.Add("Nothing", "");
+            if (File.Exists(ini.SoundListPath))
+            {
+                var sfxLines = File.ReadAllLines(ini.SoundListPath);
+
+                foreach (var sfx in sfxLines)
+                {
+                    sfxDropdown.Add(sfx, "");
+                }
+            }
+            sfxDropdown.SelectedText = "Default";
         }
         private void AddEmote(Emote emote)
         {
@@ -361,6 +392,7 @@ namespace OceanyaClient.Components
             EmoteDropdown.SelectedText = emote.DisplayID;
             curClient.SetEmote(emote.DisplayID);
             chkPreanim.IsChecked = true;
+            txtICMessage.Focus();
         }
         private void EmoteToggleBtn_Unchecked(object sender, RoutedEventArgs e)
         {
@@ -415,6 +447,7 @@ namespace OceanyaClient.Components
             {
                 // Assuming 'currentClient' is an instance of AOBot
                 curClient.emoteMod = checkBox.IsChecked == true ? ICMessage.EmoteModifiers.PlayPreanimation : ICMessage.EmoteModifiers.NoPreanimation;
+                txtICMessage.Focus();
             }
         }
 
@@ -423,6 +456,7 @@ namespace OceanyaClient.Components
             if (sender is CheckBox checkBox)
             {
                 curClient.flip = checkBox.IsChecked == true;
+                txtICMessage.Focus();
             }
         }
 
@@ -431,6 +465,7 @@ namespace OceanyaClient.Components
             if (sender is CheckBox checkBox)
             {
                 curClient.Additive = checkBox.IsChecked == true;
+                txtICMessage.Focus();
             }
         }
 
@@ -439,6 +474,7 @@ namespace OceanyaClient.Components
             if (sender is CheckBox checkBox)
             {
                 curClient.Immediate = checkBox.IsChecked == true;
+                txtICMessage.Focus();
             }
         }
 
@@ -448,6 +484,7 @@ namespace OceanyaClient.Components
             if (sender is ToggleButton toggleButton)
             {
                 EffectDropdown.SelectedText = ICMessage.Effects.Realization.ToString();
+                txtICMessage.Focus();
             }
         }
 
@@ -458,6 +495,8 @@ namespace OceanyaClient.Components
             {
                 if(EffectDropdown.SelectedText == ICMessage.Effects.Realization.ToString())
                     EffectDropdown.SelectedText = ICMessage.Effects.None.ToString();
+
+                txtICMessage.Focus();
             }
         }
 
@@ -467,6 +506,7 @@ namespace OceanyaClient.Components
             if (sender is ToggleButton toggleButton)
             {
                 curClient.screenshake = true;
+                txtICMessage.Focus();
             }
         }
 
@@ -476,6 +516,7 @@ namespace OceanyaClient.Components
             if (sender is ToggleButton toggleButton)
             {
                 curClient.screenshake = false;
+                txtICMessage.Focus();
             }
         }
     }

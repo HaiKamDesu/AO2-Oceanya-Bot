@@ -246,5 +246,10 @@ namespace OceanyaClient.Components
                 OnSendOOCMessage?.Invoke(txtOOCShowname.Text, message);
             }
         }
+
+        private void btnServerConsole_Click(object sender, RoutedEventArgs e)
+        {
+            DebugConsoleWindow.ShowWindow();
+        }
     }
 }

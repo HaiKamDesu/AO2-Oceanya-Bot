@@ -41,7 +41,7 @@
                             FontFamily="pack://application:,,,/Resources/Fonts/#Igiari Cyrillic"
                             IsHitTestVisible="False" VerticalAlignment="Center"/>
                     </Grid>
-                    <Button x:Name="btnServerConsole" Content="Server Console" FontSize="10" FontFamily="pack://application:,,,/Resources/Fonts/#Igiari Cyrillic" DockPanel.Dock="Right"/>
+                    <Button x:Name="btnServerConsole" Content="Server Console" FontSize="10" FontFamily="pack://application:,,,/Resources/Fonts/#Igiari Cyrillic" DockPanel.Dock="Right" Click="btnServerConsole_Click"/>
                 </DockPanel>
             </DockPanel>
             <!-- This Grid will automatically fill the remaining space -->

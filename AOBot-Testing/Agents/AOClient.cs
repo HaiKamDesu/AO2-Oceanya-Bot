@@ -43,6 +43,7 @@ namespace AOBot_Testing.Agents
         public string ICShowname = "";
         public string curPos = "";
         public string curBG = "";
+        public string curSFX = "";
 
         public ICMessage.DeskMods deskMod = ICMessage.DeskMods.Chat;
         public ICMessage.EmoteModifiers emoteMod = ICMessage.EmoteModifiers.NoPreanimation;
@@ -116,7 +117,7 @@ namespace AOBot_Testing.Agents
                 }
 
                 msg.Side = curPos;
-                msg.SfxName = currentEmote.sfxName;
+                msg.SfxName = curSFX == "Default" ? currentEmote.sfxName : curSFX == "Nothing" ? "1" : curSFX;
                 msg.EmoteModifier = Immediate ? ICMessage.EmoteModifiers.NoPreanimation : emoteMod;
                 msg.CharId = iniPuppetID;
                 msg.SfxDelay = currentEmote.sfxDelay;

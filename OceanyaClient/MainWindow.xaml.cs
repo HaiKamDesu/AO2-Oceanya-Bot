@@ -898,6 +898,31 @@ namespace OceanyaClient
                     e.Handled = true; // Prevent further handling if necessary
                 }
             }
+            else if (e.Key == Key.Tab)
+            {
+                if (Keyboard.FocusedElement is TextBox focusedTextBox)
+                {
+                    switch (focusedTextBox.Name)
+                    {
+                        case "txtICMessage":
+                            OOCLogControl.txtOOCMessage.Focus();
+                            e.Handled = true;
+                            break;
+                        case "txtOOCMessage":
+                            ICMessageSettingsControl.txtICMessage.Focus();
+                            e.Handled = true; // Prevent default tab behavior
+                            break;
+                        case "txtICShowname":
+                            OOCLogControl.txtOOCShowname.Focus();
+                            e.Handled = true; // Prevent default tab behavior
+                            break;
+                        case "txtOOCShowname":
+                            ICMessageSettingsControl.txtICShowname.Focus();
+                            e.Handled = true; // Prevent default tab behavior
+                            break;
+                    }
+                }
+            }
 
             base.OnPreviewKeyDown(e);
         }

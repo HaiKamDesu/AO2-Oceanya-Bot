@@ -86,9 +86,12 @@ namespace AOBot_Testing.Structures
         public int EmotionsCount { get; set; }
         public Dictionary<int, Emote> Emotions { get; set; } = new();
         public string CharIconPath { get; set; }
+        public string SoundListPath { get; set; }
         public static CharacterINI Parse(string filePath)
         {
             var config = new CharacterINI();
+            config.SoundListPath = Path.Combine(Path.GetDirectoryName(filePath), "soundlist.ini");
+
             var lines = File.ReadAllLines(filePath);
             string section = "";
 

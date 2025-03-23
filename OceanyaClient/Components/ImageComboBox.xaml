@@ -11,17 +11,17 @@
     
     <Grid>
         <ComboBox x:Name="cboINISelect"
-                  IsEditable="True"
-                  TextSearch.TextPath="Name"
-                  StaysOpenOnEdit="True"
-                  IsTextSearchEnabled="False"
-                  KeyUp="cboINISelect_KeyDown"
-                  SelectionChanged="cboINISelect_SelectionChanged"
-                  PreviewKeyDown="cboINISelect_PreviewKeyDown"
-                  LostFocus="cboINISelect_LostFocus"
-                  BorderBrush="Black"
-                  VerticalContentAlignment="Center"
-                  Background="DarkGray">
+              IsEditable="True"
+              TextSearch.TextPath="Name"
+              StaysOpenOnEdit="True"
+              IsTextSearchEnabled="False"
+              KeyDown="cboINISelect_KeyDown"
+              SelectionChanged="cboINISelect_SelectionChanged"
+              PreviewKeyDown="cboINISelect_PreviewKeyDown"
+              LostFocus="cboINISelect_LostFocus"
+              BorderBrush="Black"
+              VerticalContentAlignment="Center"
+              Background="DarkGray">
 
             <!-- Move the Converter here so it's available inside the Template -->
             <ComboBox.Resources>

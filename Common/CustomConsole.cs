@@ -10,7 +10,7 @@ namespace Common
     public static class CustomConsole
     {
         public static List<string> lines = new List<string>();
-
+        public static Action<string> OnWriteLine;
         public static void WriteLine(string message)
         {
             string timestampedMessage = $"[{DateTime.Now:yyyy-MM-dd HH:mm:ss}] {message}";
@@ -18,6 +18,7 @@ namespace Common
             System.Diagnostics.Debug.WriteLine(timestampedMessage);
 
             lines.Add(timestampedMessage);
+            OnWriteLine?.Invoke(timestampedMessage);
         }
     }
 }
