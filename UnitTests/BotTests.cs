@@ -224,7 +224,7 @@ namespace AOBot_Testing.Tests
             {
                 testingBot.SetCharacter(ini);
 
-                foreach (var kvp in testingBot.currentINI.Emotions)
+                foreach (var kvp in testingBot.currentINI.configINI.Emotions)
                 {
                     var emote = kvp.Value;
 

@@ -33,7 +33,7 @@ namespace AOBot_Testing.Agents
 
         public int playerID;
         private string currentArea = location;
-        public CharacterINI? currentINI;
+        public CharacterFolder? currentINI;
         public Emote? currentEmote;
 
         public string clientName = "DefaultClientName";
@@ -57,7 +57,7 @@ namespace AOBot_Testing.Agents
         public (int Horizontal, int Vertical) SelfOffset;
         public bool switchPosWhenChangingINI = false;
 
-        private CharacterINI CurrentINI
+        private CharacterFolder CurrentINI
         {
             get
             {
@@ -69,7 +69,7 @@ namespace AOBot_Testing.Agents
 
                 if(currentINI != null)
                 {
-                    currentEmote = value.Emotions.Values.First();
+                    currentEmote = value.configINI.Emotions.Values.First();
                 }
             }
         }
@@ -77,7 +77,7 @@ namespace AOBot_Testing.Agents
         public Action<string, string, string, string, int> OnMessageReceived;
         public Action<ICMessage> OnICMessageReceived;
         public Action<string, string, bool> OnOOCMessageReceived;
-        public Action<CharacterINI> OnChangedCharacter;
+        public Action<CharacterFolder> OnChangedCharacter;
         public Action<string> OnBGChange;
         public Action<string> OnSideChange;
         public Action OnINIPuppetChange; 
@@ -259,24 +259,24 @@ namespace AOBot_Testing.Agents
         }
         public void SetCharacter(string characterName)
         {
-            var newChar = new CharacterINI();
+            var newChar = new CharacterFolder();
             try
             {
-                newChar = CharacterINI.FullList.First(c => c.Name == characterName);
+                newChar = CharacterFolder.FullList.First(c => c.Name == characterName);
             }
             catch
             {
-                newChar = CharacterINI.FullList.First(c => c.Name.ToLower() == characterName.ToLower());
+                newChar = CharacterFolder.FullList.First(c => c.Name.ToLower() == characterName.ToLower());
             }
 
             SetCharacter(newChar);
         }
-        public void SetCharacter(CharacterINI character)
+        public void SetCharacter(CharacterFolder character)
         {
             CurrentINI = character;
             if (switchPosWhenChangingINI || string.IsNullOrEmpty(curPos))
             {
-                SetPos(character.Side);
+                SetPos(character.configINI.Side);
             }
 
 
@@ -284,6 +284,8 @@ namespace AOBot_Testing.Agents
         }
         public void SetPos(string newPos, bool callEvent = true)
         {
+            if (curPos == newPos) return;
+
             curPos = newPos;
             if (callEvent)
             {
@@ -296,7 +298,7 @@ namespace AOBot_Testing.Agents
         }
         public void SetEmote(string emoteDisplayID)
         {
-            currentEmote = CurrentINI.Emotions.Values.First(e => e.DisplayID == emoteDisplayID);
+            currentEmote = CurrentINI.configINI.Emotions.Values.First(e => e.DisplayID == emoteDisplayID);
 
             deskMod = currentEmote.DeskMod;
             emoteMod = currentEmote.Modifier;
@@ -604,7 +606,7 @@ namespace AOBot_Testing.Agents
                     // Select the first available character
                     var characterName = serverCharacterList.ElementAt(i).Key;
 
-                    var ini = CharacterINI.FullList.FirstOrDefault(c => c.Name == characterName);
+                    var ini = CharacterFolder.FullList.FirstOrDefault(c => c.Name == characterName);
 
                     //if the ini is null, it means you dont have it in your pc, meaning keep looking for an available one you DO have.
                     if (ini != null)
@@ -649,7 +651,7 @@ namespace AOBot_Testing.Agents
 
             var characterName = serverCharacterList.ElementAt(serverCharID).Key;
 
-            var ini = CharacterINI.FullList.FirstOrDefault(c => c.Name == characterName);
+            var ini = CharacterFolder.FullList.FirstOrDefault(c => c.Name == characterName);
 
             if (ini != null)
             {
@@ -658,7 +660,7 @@ namespace AOBot_Testing.Agents
                 if (iniswapToSelected)
                 {
                     CurrentINI = ini;
-                    ICShowname = CurrentINI?.ShowName ?? characterName;
+                    ICShowname = CurrentINI?.configINI.ShowName ?? characterName;
                 }
                 CustomConsole.WriteLine($"Selected INI Puppet: \"{characterName}\" (Server Index: {serverCharID})");
             }

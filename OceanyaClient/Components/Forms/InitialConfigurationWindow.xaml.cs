@@ -90,7 +90,7 @@ namespace OceanyaClient
             if (RefreshInfoCheckBox.IsChecked == true)
             {
                 await WaitForm.ShowFormAsync("Refreshing character and background info...", this);
-                CharacterINI.RefreshCharacterList
+                CharacterFolder.RefreshCharacterList
                     ( 
                         onParsedCharacter:
                         (ini) =>

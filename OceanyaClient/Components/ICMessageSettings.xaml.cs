@@ -47,7 +47,7 @@ namespace OceanyaClient.Components
             #endregion
 
             #region Char dropdown
-            foreach (var ini in CharacterINI.FullList)
+            foreach (var ini in CharacterFolder.FullList)
             {
                 CharacterDropdown.Add(ini.Name, ini.CharIconPath);
             }
@@ -99,7 +99,7 @@ namespace OceanyaClient.Components
         {
             // Reinitialize Character Dropdown
             CharacterDropdown.Clear();
-            foreach (var ini in CharacterINI.FullList)
+            foreach (var ini in CharacterFolder.FullList)
             {
                 CharacterDropdown.Add(ini.Name, ini.CharIconPath);
             }
@@ -164,8 +164,8 @@ namespace OceanyaClient.Components
         {
             if (curClient == null) return;
 
-            curClient.SetPos(newPos);
             txtICMessage.Focus();
+            curClient.SetPos(newPos, true);
         }
 
         private void EmoteDropdown_OnConfirm(object? sender, string emoteDisplayID)
@@ -179,7 +179,7 @@ namespace OceanyaClient.Components
 
         private void CharacterDropdown_OnConfirm(object? sender, string iniName)
         {
-            var ini = CharacterINI.FullList.FirstOrDefault(x => x.Name == iniName);
+            var ini = CharacterFolder.FullList.FirstOrDefault(x => x.Name == iniName);
             if(ini != null)
             {
                 txtICMessage.Focus();
@@ -247,9 +247,9 @@ namespace OceanyaClient.Components
                     {
                         PositionDropdown.SelectedText = client.curPos;
                     }
-                    else if (allPos.ContainsKey(client.currentINI.Side))
+                    else if (allPos.ContainsKey(client.currentINI.configINI.Side))
                     {
-                        PositionDropdown.SelectedText = client.currentINI.Side;
+                        PositionDropdown.SelectedText = client.currentINI.configINI.Side;
                     }
                     else
                     {
@@ -261,7 +261,7 @@ namespace OceanyaClient.Components
                 }
                 else
                 {
-                    PositionDropdown.SelectedText = client.currentINI.Side;
+                    PositionDropdown.SelectedText = client.currentINI.configINI.Side;
                 }
             });
         }
@@ -274,14 +274,16 @@ namespace OceanyaClient.Components
                 curClient.OnSideChange += UpdatePos;
             });
         }
-        private void SetINI(CharacterINI ini)
+        private void SetINI(CharacterFolder ini)
         {
-            txtICShowname_Placeholder.Text = ini.ShowName;
+            ini.configINI.Update();
+
+            txtICShowname_Placeholder.Text = ini.configINI.ShowName;
 
             EmoteGrid.ClearGrid();
             emotes.Clear();
             EmoteDropdown.Clear();
-            foreach (var emote in ini.Emotions.Values)
+            foreach (var emote in ini.configINI.Emotions.Values)
             {
                 AddEmote(emote);
             }

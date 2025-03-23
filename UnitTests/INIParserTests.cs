@@ -14,7 +14,7 @@ namespace UnitTests
         [OneTimeSetUp]
         public void GatherAllINI()
         {
-            CharacterINI.RefreshCharacterList();
+            CharacterFolder.RefreshCharacterList();
         }
 
         [Test]

@@ -226,7 +226,7 @@ namespace AOBot_Testing.Structures
                     Flip = parts[13] == "1",
                     Realization = parts[14] == "1",
                     TextColor = int.TryParse(parts[15], out int textColor) ? (TextColors)textColor : TextColors.White,
-                    ShowName = string.IsNullOrEmpty(parts[16]) ? CharacterINI.FullList.First(ini => ini.Name == parts[3]).ShowName : Globals.ReplaceTextForSymbols(parts[16]),
+                    ShowName = string.IsNullOrEmpty(parts[16]) ? CharacterFolder.FullList.First(ini => ini.Name == parts[3]).configINI.ShowName : Globals.ReplaceTextForSymbols(parts[16]),
                     OtherCharId = int.TryParse(parts[17], out int otherCharId) ? otherCharId : -1,
                     OtherName = parts[18],
                     OtherEmote = parts[19],

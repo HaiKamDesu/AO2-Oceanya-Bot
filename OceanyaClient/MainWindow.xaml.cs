@@ -183,12 +183,6 @@ namespace OceanyaClient
             {
                 AOClient bot = new AOClient(Globals.IPs[Globals.Servers.ChillAndDices], Globals.ConnectionString);
                 bot.clientName = clientName;
-                if (clients.Count == 0)
-                {
-                    OOCLogControl.IsEnabled = true;
-                    ICLogControl.IsEnabled = true;
-                    ICMessageSettingsControl.IsEnabled = true;
-                }
 
                 bot.OnICMessageReceived += (ICMessage icMessage) =>
                 {
@@ -263,7 +257,7 @@ namespace OceanyaClient
                 toggleBtn.ContextMenu = contextMenu;
                 #endregion
                 // Subscribe to OnChangedCharacter event
-                bot.OnChangedCharacter += (CharacterINI newCharacter) =>
+                bot.OnChangedCharacter += (CharacterFolder newCharacter) =>
                 {
                     Dispatcher.Invoke(() =>
                     {
@@ -447,9 +441,17 @@ namespace OceanyaClient
 
                 toggleBtn.IsChecked = true;
                 UpdateClientTooltip(bot);
+
+                if (clients.Count == 1)
+                {
+                    OOCLogControl.IsEnabled = true;
+                    ICLogControl.IsEnabled = true;
+                    ICMessageSettingsControl.IsEnabled = true;
+                }
             }
             catch (Exception ex)
             {
+                WaitForm.CloseForm();
                 OceanyaMessageBox.Show($"Error connecting client: {ex.Message}", "Connection Failed", MessageBoxButton.OK, MessageBoxImage.Error);
             }
             finally
@@ -802,7 +804,7 @@ namespace OceanyaClient
             await WaitForm.ShowFormAsync("Refreshing character and background info...", this);
 
             Globals.UpdateConfigINI(Globals.PathToConfigINI);
-            CharacterINI.RefreshCharacterList
+            CharacterFolder.RefreshCharacterList
                 (
                     onParsedCharacter:
                     (ini) =>

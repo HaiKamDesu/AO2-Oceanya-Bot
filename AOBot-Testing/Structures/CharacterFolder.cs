@@ -4,13 +4,14 @@ using Common;
 
 namespace AOBot_Testing.Structures
 {
-    public class CharacterINI
+    [Serializable]
+    public class CharacterFolder
     {
         #region Static methods
         public static List<string> CharacterFolders => Globals.BaseFolders.Select(x => Path.Combine(x, "characters")).ToList();
         static string cacheFile = Path.Combine(Path.GetTempPath(), "characters.json");
-        static List<CharacterINI> characterConfigs = new List<CharacterINI>();
-        public static List<CharacterINI> FullList
+        static List<CharacterFolder> characterConfigs = new List<CharacterFolder>();
+        public static List<CharacterFolder> FullList
         {
             get
             {
@@ -32,9 +33,9 @@ namespace AOBot_Testing.Structures
             }
         }
 
-        public static void RefreshCharacterList(Action<CharacterINI> onParsedCharacter = null, Action<string> onChangedMountPath = null)
+        public static void RefreshCharacterList(Action<CharacterFolder> onParsedCharacter = null, Action<string> onChangedMountPath = null)
         {
-            characterConfigs = new List<CharacterINI>();
+            characterConfigs = new List<CharacterFolder>();
 
             foreach (var CharacterFolder in CharacterFolders)
             {
@@ -46,7 +47,7 @@ namespace AOBot_Testing.Structures
                     var iniFilePath = Path.Combine(directory, "char.ini");
                     if (File.Exists(iniFilePath))
                     {
-                        var config = CharacterINI.Parse(iniFilePath);
+                        var config = Structures.CharacterFolder.Parse(iniFilePath);
                         if(!characterConfigs.Any(x => x.Name == config.Name))
                         {
                             CustomConsole.WriteLine("Parsed Character: " + config.Name + $" ({CharacterFolder})");
@@ -62,39 +63,87 @@ namespace AOBot_Testing.Structures
             SaveToJson(cacheFile, characterConfigs);
             CustomConsole.WriteLine("Character list saved to cache.");
         }
+
+        static JsonSerializerOptions jsonOptions = new JsonSerializerOptions { WriteIndented = true };
         // **Save all characters to a single JSON file**
-        static void SaveToJson(string filePath, List<CharacterINI> characters)
+        static void SaveToJson(string filePath, List<CharacterFolder> characters)
         {
-            var json = JsonSerializer.Serialize(characters, new JsonSerializerOptions { WriteIndented = true });
+            var json = JsonSerializer.Serialize(characters, jsonOptions);
             File.WriteAllText(filePath, json);
         }
 
         // **Load all characters from a single JSON file**
-        static List<CharacterINI> LoadFromJson(string filePath)
+        static List<CharacterFolder> LoadFromJson(string filePath)
         {
             var json = File.ReadAllText(filePath);
-            return JsonSerializer.Deserialize<List<CharacterINI>>(json);
+            return JsonSerializer.Deserialize<List<CharacterFolder>>(json);
         }
         #endregion
 
-        public string PathToIni { get; set; }
+
+
         public string Name { get; set; }
+        public string DirectoryPath { get; private set; }
+        public string PathToConfigIni { get; private set; }
+        public string CharIconPath { get; private set; }
+        public string SoundListPath { get; private set; }
+
+        public CharacterConfigINI configINI { get; private set; }
+
+        public static List<string> AllowedImageExtensions = new List<string> { "png", "jpg", "webp", "gif", "pdn" };
+        public void UpdatePaths(string configINIPath)
+        {
+            DirectoryPath = Path.GetDirectoryName(configINIPath);
+
+            foreach (var extension in AllowedImageExtensions)
+            {
+                string curPath = Path.Combine(DirectoryPath, "char_icon." + extension);
+                if (File.Exists(curPath))
+                {
+                    CharIconPath = curPath;
+                }
+            }
+
+            if (string.IsNullOrEmpty(CharIconPath))
+            {
+                CharIconPath = Path.Combine(DirectoryPath, "char_icon.png");
+            }
+
+            SoundListPath = Path.Combine(DirectoryPath, "soundlist.ini");
+            PathToConfigIni = configINIPath;
+
+            Name = Path.GetFileName(DirectoryPath);
+        }
+        public static CharacterFolder Parse(string configINIPath)
+        {
+            var folder = new CharacterFolder();
+            folder.UpdatePaths(configINIPath);
+
+            folder.configINI = new CharacterConfigINI(configINIPath);
+            //You dont need to update it here, since it will be updated when the folder is used.
+            folder.configINI.Update();
+
+            return folder;
+        }
+    }
+
+    [Serializable]
+    public class CharacterConfigINI(string pathToConfigINI)
+    {
         public string ShowName { get; set; }
         public string Gender { get; set; }
         public string Side { get; set; }
         public int PreAnimationTime { get; set; }
         public int EmotionsCount { get; set; }
         public Dictionary<int, Emote> Emotions { get; set; } = new();
-        public string CharIconPath { get; set; }
-        public string SoundListPath { get; set; }
-        public static CharacterINI Parse(string filePath)
+
+        public void Update()
         {
-            var config = new CharacterINI();
-            config.SoundListPath = Path.Combine(Path.GetDirectoryName(filePath), "soundlist.ini");
+            string configINIPath = pathToConfigINI;
 
-            var lines = File.ReadAllLines(filePath);
+            #region Config Parsing
+            var lines = File.ReadAllLines(configINIPath);
             string section = "";
-
             foreach (var line in lines.Select(l => l.Trim()))
             {
                 if (string.IsNullOrWhiteSpace(line) || line.StartsWith(";")) continue;
@@ -114,80 +163,59 @@ namespace AOBot_Testing.Structures
                 switch (section)
                 {
                     case "options":
-                        if (key == "showname") config.ShowName = value;
-                        else if (key == "gender") config.Gender = value;
-                        else if (key == "side") config.Side = value;
+                        if (key == "showname") ShowName = value;
+                        else if (key == "gender") Gender = value;
+                        else if (key == "side") Side = value;
                         break;
 
                     case "time":
                         if (key == "preanim" && int.TryParse(value, out int preanimTime))
-                            config.PreAnimationTime = preanimTime;
+                            PreAnimationTime = preanimTime;
                         break;
 
                     case "emotions":
                         if (key == "number" && int.TryParse(value, out int emotionCount))
-                            config.EmotionsCount = emotionCount;
+                            EmotionsCount = emotionCount;
                         else if (int.TryParse(key, out int emotionId))
                         {
-                            if (!config.Emotions.ContainsKey(emotionId))
-                                config.Emotions[emotionId] = new Emote(emotionId);
-                            config.Emotions[emotionId] = Emote.ParseEmoteLine(value);
-                            config.Emotions[emotionId].ID = emotionId;
+                            if (!Emotions.ContainsKey(emotionId))
+                                Emotions[emotionId] = new Emote(emotionId);
+                            Emotions[emotionId] = Emote.ParseEmoteLine(value);
+                            Emotions[emotionId].ID = emotionId;
                         }
                         break;
 
                     case "soundn":
                         if (int.TryParse(key, out int soundId))
                         {
-                            if (!config.Emotions.ContainsKey(soundId))
-                                config.Emotions[soundId] = new Emote(soundId);
-                            config.Emotions[soundId].sfxName = string.IsNullOrEmpty(value) ? "1" : value;
+                            if (!Emotions.ContainsKey(soundId))
+                                Emotions[soundId] = new Emote(soundId);
+                            Emotions[soundId].sfxName = string.IsNullOrEmpty(value) ? "1" : value;
                         }
                         break;
 
                     case "soundt":
                         if (int.TryParse(key, out int soundTimeId) && int.TryParse(value, out int timeValue))
                         {
-                            if (!config.Emotions.ContainsKey(soundTimeId))
-                                config.Emotions[soundTimeId] = new Emote(soundTimeId);
-                            config.Emotions[soundTimeId].sfxDelay = timeValue;
+                            if (!Emotions.ContainsKey(soundTimeId))
+                                Emotions[soundTimeId] = new Emote(soundTimeId);
+                            Emotions[soundTimeId].sfxDelay = timeValue;
                         }
                         break;
                 }
             }
-            config.Name = Path.GetFileName(Path.GetDirectoryName(filePath));
-            config.PathToIni = filePath;
-            string baseCharacterPath = Path.GetDirectoryName(filePath);
+            #endregion
 
-            var extensions = new List<string> { "png", "jpg", "webp", "gif", "pdn" };
-            foreach (var extension in extensions)
-            {
-                string curPath = Path.Combine(baseCharacterPath, "char_icon." + extension);
-                if (File.Exists(curPath)) 
-                {
-                    config.CharIconPath = curPath;
-                }
-            }
+            #region Gather Button Paths
+            string buttonPath = Path.Combine(Path.GetDirectoryName(pathToConfigINI), "Emotions");
 
-            if (string.IsNullOrEmpty(config.CharIconPath))
-            {
-                config.CharIconPath = Path.Combine(baseCharacterPath, "char_icon.png");
-            }
-
-            #region Gather Buttons
-            string buttonPath = Path.Combine(baseCharacterPath, "Emotions");
-
-            if (Directory.Exists(buttonPath))
-            {
-
-            }
-            foreach (var item in config.Emotions)
+            foreach (var item in Emotions)
             {
                 int id = item.Key;
 
-                foreach (var extension in extensions)
+                foreach (var extension in CharacterFolder.AllowedImageExtensions)
                 {
-                    string currentButtonPath_off = Path.Combine(buttonPath, $"button{id}_off."+extension);
+                    string currentButtonPath_off = Path.Combine(buttonPath, $"button{id}_off." + extension);
                     if (File.Exists(currentButtonPath_off) && string.IsNullOrEmpty(item.Value.PathToImage_off))
                     {
                         item.Value.PathToImage_off = currentButtonPath_off;
@@ -202,21 +230,21 @@ namespace AOBot_Testing.Structures
             }
             #endregion
 
-            if(config.EmotionsCount != config.Emotions.Count)
+            #region Correct emotes based on config file
+            if (EmotionsCount != Emotions.Count)
             {
-                for (int i = 1; i <= config.EmotionsCount; i++)
+                for (int i = 1; i <= EmotionsCount; i++)
                 {
-                    if (!config.Emotions.ContainsKey(i))
+                    if (!Emotions.ContainsKey(i))
                     {
                         //add an empty emote, since this is how the AO client works.
-                        config.Emotions.Add(i, new Emote(i));
+                        Emotions.Add(i, new Emote(i));
                     }
                 }
 
-                config.Emotions = config.Emotions.Take(config.EmotionsCount).ToDictionary(x => x.Key, x => x.Value);
+                Emotions = Emotions.Take(EmotionsCount).ToDictionary(x => x.Key, x => x.Value);
             }
-
-            return config;
+            #endregion
         }
     }
 }
