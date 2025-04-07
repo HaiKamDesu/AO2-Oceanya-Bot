@@ -139,6 +139,9 @@ Each of these settings has predefined integer values. **If a change is requested
         { "<and>", "&" },
     };
 
+    public static List<string> AllowedImageExtensions = new List<string> { "apng", "webp", "gif", "png", "jpg", "jpeg", "pdn" };
+
+
     public static void UpdateConfigINI(string pathToConfigINI)
     {
         PathToConfigINI = pathToConfigINI;

@@ -867,37 +867,50 @@ namespace OceanyaClient
             AudioPlayer.PlayEmbeddedSound("Resources/BellDing.mp3", 0.25f);
         }
 
+        private bool _altGrActive = false;
+
         protected override void OnPreviewKeyDown(KeyEventArgs e)
         {
-            // Check if the Control key is pressed
-            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control)
+            // When RightAlt is pressed, mark AltGr as active.
+            if (e.Key == Key.RightAlt)
+            {
+                _altGrActive = true;
+            }
+
+            // Determine if AltGr is active either because our flag is set
+            // or because the RightAlt key is physically down.
+            bool isAltGrActive = _altGrActive || ((Keyboard.GetKeyStates(Key.RightAlt) & KeyStates.Down) == KeyStates.Down);
+
+            // If the Control modifier is pressed but AltGr is active, skip processing.
+            if ((Keyboard.Modifiers & ModifierKeys.Control) == ModifierKeys.Control && !isAltGrActive)
             {
                 int index = -1;
 
-                // Check if the key is a digit (main keys or numpad)
+                // Check if the pressed key is a digit on the main keyboard.
                 if (e.Key >= Key.D1 && e.Key <= Key.D9)
                 {
                     index = e.Key - Key.D1;
-                }
-                else if(e.Key == Key.D0)
-                {
-                    index = 9;
-                }
-                else if (e.Key >= Key.NumPad1 && e.Key <= Key.NumPad9)
-                {
-                    index = e.Key - Key.NumPad1;
                 }
                 else if (e.Key == Key.D0)
                 {
                     index = 9;
                 }
+                // Or a digit on the numpad.
+                else if (e.Key >= Key.NumPad1 && e.Key <= Key.NumPad9)
+                {
+                    index = e.Key - Key.NumPad1;
+                }
+                else if (e.Key == Key.NumPad0)
+                {
+                    index = 9;
+                }
 
-                // If the index is valid and there is a corresponding client, select it
+                // If a valid digit was pressed and a corresponding client exists, process the selection.
                 if (index >= 0 && index < clients.Count)
                 {
                     AOClient client = clients.Values.ElementAt(index);
                     SelectClient(client);
-                    e.Handled = true; // Prevent further handling if necessary
+                    e.Handled = true;
                 }
             }
             else if (e.Key == Key.Tab)
@@ -929,5 +942,14 @@ namespace OceanyaClient
             base.OnPreviewKeyDown(e);
         }
 
+        protected override void OnPreviewKeyUp(KeyEventArgs e)
+        {
+            // When the RightAlt key is released, clear the AltGr flag.
+            if (e.Key == Key.RightAlt)
+            {
+                _altGrActive = false;
+            }
+            base.OnPreviewKeyUp(e);
+        }
     }
 }

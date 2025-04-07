@@ -42,7 +42,7 @@ namespace AOBot_Testing.Structures
 
                     var bgFiles = Directory.GetFiles(bgFolder, "*.*", SearchOption.TopDirectoryOnly);
 
-                    var extensions = new List<string>() { "png", "jpg", "jpeg" };
+                    var extensions = Globals.AllowedImageExtensions;
                     var exclude = new List<string>() { "defensedesk", "prosecutiondesk", "stand", "judgedesk" };
 
                     List<string> bgFilesFiltered = new();

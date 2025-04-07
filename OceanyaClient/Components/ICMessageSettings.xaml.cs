@@ -309,7 +309,6 @@ namespace OceanyaClient.Components
         {
             string buttonOff = emote.PathToImage_off;
             string buttonOn = emote.PathToImage_on;
-
             ToggleButton toggleBtn = new ToggleButton
             {
                 Width = 40,
@@ -318,11 +317,13 @@ namespace OceanyaClient.Components
                 Focusable = false,
                 IsTabStop = false
             };
-
             toggleBtn.Checked += EmoteToggleBtn_Checked;
             toggleBtn.Unchecked += EmoteToggleBtn_Unchecked;
 
-            if (System.IO.File.Exists(buttonOff) && System.IO.File.Exists(buttonOn))
+            bool offExists = System.IO.File.Exists(buttonOff);
+            bool onExists = System.IO.File.Exists(buttonOn);
+
+            if (offExists || onExists)
             {
                 // Create the ControlTemplate dynamically
                 ControlTemplate template = new ControlTemplate(typeof(ToggleButton));
@@ -331,20 +332,50 @@ namespace OceanyaClient.Components
                 imageFactory.Name = "ButtonImage";
                 imageFactory.SetValue(Image.WidthProperty, 40.0);
                 imageFactory.SetValue(Image.HeightProperty, 40.0);
-                imageFactory.SetValue(Image.SourceProperty, new BitmapImage(new Uri(buttonOff, UriKind.Absolute)));
+
+                BitmapImage offImage;
+                BitmapImage onImage;
+
+                if (offExists && onExists)
+                {
+                    // Both images exist, use them as is
+                    offImage = new BitmapImage(new Uri(buttonOff, UriKind.Absolute));
+                    onImage = new BitmapImage(new Uri(buttonOn, UriKind.Absolute));
+                }
+                else if (offExists)
+                {
+                    // Only off image exists
+                    BitmapImage existingImage = new BitmapImage(new Uri(buttonOff, UriKind.Absolute));
+                    // Create darkened version for on state
+                    onImage = CreateDarkenedImage(buttonOff);
+                   
+                    // Use existing image as the off state
+                    offImage = existingImage; 
+                }
+                else // onExists
+                {
+                    // Only on image exists
+                    BitmapImage existingImage = new BitmapImage(new Uri(buttonOn, UriKind.Absolute));
+                    // Use existing image as the on state
+                    onImage = existingImage;
+                    // Create darkened version for off state
+                    offImage = CreateDarkenedImage(buttonOn);
+                }
+
+                // Set default (off) state image
+                imageFactory.SetValue(Image.SourceProperty, offImage);
 
                 gridFactory.AppendChild(imageFactory);
                 template.VisualTree = gridFactory;
 
-                // Add the trigger for toggled state (change image)
+                // Add the trigger for toggled state
                 Trigger trigger = new Trigger { Property = ToggleButton.IsCheckedProperty, Value = true };
                 trigger.Setters.Add(new Setter
                 {
                     Property = Image.SourceProperty,
                     TargetName = "ButtonImage",
-                    Value = new BitmapImage(new Uri(buttonOn, UriKind.Absolute))
+                    Value = onImage
                 });
-
                 template.Triggers.Add(trigger);
                 toggleBtn.Template = template;
             }
@@ -355,11 +386,67 @@ namespace OceanyaClient.Components
             }
 
             EmoteDropdown.Add(emote.DisplayID, emote.PathToImage_off);
-
-            toggleBtn.Focusable = false;
-            toggleBtn.IsTabStop = false;
             EmoteGrid.AddElement(toggleBtn);
             emotes.Add(emote, toggleBtn);
+        }
+
+        /// <summary>
+        /// Creates a darkened version of the image at the specified path
+        /// </summary>
+        private BitmapImage CreateDarkenedImage(string imagePath)
+        {
+            // Load the original image
+            BitmapImage originalImage = new BitmapImage(new Uri(imagePath, UriKind.Absolute));
+
+            // Create a writable bitmap to manipulate the pixels
+            WriteableBitmap writableBmp = new WriteableBitmap(originalImage);
+
+            // Create an array to hold the pixel data
+            int width = writableBmp.PixelWidth;
+            int height = writableBmp.PixelHeight;
+            int stride = width * 4; // 4 bytes per pixel (BGRA)
+            byte[] pixels = new byte[height * stride];
+
+            // Copy the pixel data
+            writableBmp.CopyPixels(pixels, stride, 0);
+
+            // Darken each pixel (reduce brightness by 30%)
+            float darkenFactor = 0.7f;
+            for (int i = 0; i < pixels.Length; i += 4)
+            {
+                // BGRA format
+                byte blue = pixels[i];
+                byte green = pixels[i + 1];
+                byte red = pixels[i + 2];
+                // Alpha channel at i+3 remains unchanged
+
+                // Darken each color component
+                pixels[i] = (byte)(blue * darkenFactor);
+                pixels[i + 1] = (byte)(green * darkenFactor);
+                pixels[i + 2] = (byte)(red * darkenFactor);
+            }
+
+            // Create a new WriteableBitmap for the darkened image
+            WriteableBitmap darkenedBmp = new WriteableBitmap(width, height, 96, 96, PixelFormats.Bgra32, null);
+            darkenedBmp.WritePixels(new Int32Rect(0, 0, width, height), pixels, stride, 0);
+
+            // Convert back to BitmapImage for use in the UI
+            BitmapImage result = new BitmapImage();
+            using (MemoryStream stream = new MemoryStream())
+            {
+                PngBitmapEncoder encoder = new PngBitmapEncoder();
+                encoder.Frames.Add(BitmapFrame.Create(darkenedBmp));
+                encoder.Save(stream);
+                stream.Position = 0;
+
+                result.BeginInit();
+                result.CacheOption = BitmapCacheOption.OnLoad;
+                result.StreamSource = stream;
+                result.EndInit();
+                result.Freeze(); // Make it thread-safe
+            }
+
+            return result;
         }
 
         public void ClearSettings()

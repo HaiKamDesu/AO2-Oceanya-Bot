@@ -35,8 +35,6 @@ namespace AOBot_Testing.Structures
 
         public static void RefreshCharacterList(Action<CharacterFolder> onParsedCharacter = null, Action<string> onChangedMountPath = null)
         {
-            characterConfigs = new List<CharacterFolder>();
-
             foreach (var CharacterFolder in CharacterFolders)
             {
                 onChangedMountPath?.Invoke(CharacterFolder);
@@ -47,16 +45,27 @@ namespace AOBot_Testing.Structures
                     var iniFilePath = Path.Combine(directory, "char.ini");
                     if (File.Exists(iniFilePath))
                     {
-                        var config = Structures.CharacterFolder.Parse(iniFilePath);
-                        if(!characterConfigs.Any(x => x.Name == config.Name))
+                        var folderName = Path.GetFileName(directory);
+
+                        //If there are none with same name
+                        if(!characterConfigs.Any(x => x.Name == folderName))
                         {
+                            //Add new character
+                            var config = Structures.CharacterFolder.Create(iniFilePath);
                             CustomConsole.WriteLine("Parsed Character: " + config.Name + $" ({CharacterFolder})");
                             characterConfigs.Add(config);
                             onParsedCharacter?.Invoke(config);
                         }
+                        //If there is one with same name, and the path is the same, update it.
+                        else if(characterConfigs.Any(x => x.PathToConfigIni == iniFilePath))
+                        {
+                            var config = characterConfigs.First(x => x.PathToConfigIni == iniFilePath);
+                            config.Update(iniFilePath, false);
+
+                            onParsedCharacter?.Invoke(config);
+                        }
                     }
                 }
-
             }
 
             // Save to JSON file for fast future loading
@@ -83,19 +92,28 @@ namespace AOBot_Testing.Structures
 
 
         public string Name { get; set; }
-        public string DirectoryPath { get; private set; }
-        public string PathToConfigIni { get; private set; }
-        public string CharIconPath { get; private set; }
-        public string SoundListPath { get; private set; }
+        public string DirectoryPath { get; set; }
+        public string PathToConfigIni { get; set; }
+        public string CharIconPath { get; set; }
+        public string SoundListPath { get; set; }
 
-        public CharacterConfigINI configINI { get; private set; }
+        public CharacterConfigINI configINI { get; set; }
 
-        public static List<string> AllowedImageExtensions = new List<string> { "png", "jpg", "webp", "gif", "pdn" };
-        public void UpdatePaths(string configINIPath)
+        public void Update(string configINIPath, bool updateConfigINI)
+        {
+            UpdatePaths(configINIPath);
+
+            if(updateConfigINI)
+            {
+                configINI.PathToConfigINI = configINIPath;
+                configINI.Update();
+            }
+        }
+        private void UpdatePaths(string configINIPath)
         {
             DirectoryPath = Path.GetDirectoryName(configINIPath);
 
-            foreach (var extension in AllowedImageExtensions)
+            foreach (var extension in Globals.AllowedImageExtensions)
             {
                 string curPath = Path.Combine(DirectoryPath, "char_icon." + extension);
                 if (File.Exists(curPath))
@@ -114,13 +132,12 @@ namespace AOBot_Testing.Structures
 
             Name = Path.GetFileName(DirectoryPath);
         }
-        public static CharacterFolder Parse(string configINIPath)
+        public static CharacterFolder Create(string configINIPath)
         {
             var folder = new CharacterFolder();
             folder.UpdatePaths(configINIPath);
 
             folder.configINI = new CharacterConfigINI(configINIPath);
-            //You dont need to update it here, since it will be updated when the folder is used.
             folder.configINI.Update();
 
             return folder;
@@ -130,6 +147,7 @@ namespace AOBot_Testing.Structures
     [Serializable]
     public class CharacterConfigINI(string pathToConfigINI)
     {
+        public string PathToConfigINI { get; set; } = pathToConfigINI;
         public string ShowName { get; set; }
         public string Gender { get; set; }
         public string Side { get; set; }
@@ -139,7 +157,7 @@ namespace AOBot_Testing.Structures
 
         public void Update()
         {
-            string configINIPath = pathToConfigINI;
+            string configINIPath = PathToConfigINI;
 
             #region Config Parsing
             var lines = File.ReadAllLines(configINIPath);
@@ -213,7 +231,7 @@ namespace AOBot_Testing.Structures
             {
                 int id = item.Key;
 
-                foreach (var extension in CharacterFolder.AllowedImageExtensions)
+                foreach (var extension in Globals.AllowedImageExtensions)
                 {
                     string currentButtonPath_off = Path.Combine(buttonPath, $"button{id}_off." + extension);
                     if (File.Exists(currentButtonPath_off) && string.IsNullOrEmpty(item.Value.PathToImage_off))
