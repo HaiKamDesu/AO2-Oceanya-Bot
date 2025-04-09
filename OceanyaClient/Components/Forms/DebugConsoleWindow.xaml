@@ -17,18 +17,21 @@
         Closing="Window_Closing">
 
     <Window.Resources>
-        <!-- Console TextBox style -->
-        <Style x:Key="ConsoleTextBoxStyle" TargetType="{x:Type TextBox}">
-            <Setter Property="Background" Value="#FF262626"/>
+        <!-- Console RichTextBox style -->
+        <Style x:Key="ConsoleRichTextBoxStyle" TargetType="{x:Type RichTextBox}">
+            <Setter Property="Background" Value="#33262626"/>
+            <!-- Changed opacity to 20% -->
             <Setter Property="Foreground" Value="White"/>
-            <Setter Property="BorderBrush" Value="#444444"/>
+            <Setter Property="BorderBrush" Value="#44444444"/>
+            <!-- Made border slightly transparent too -->
             <Setter Property="BorderThickness" Value="1"/>
             <Setter Property="Padding" Value="8,5"/>
             <Setter Property="FontSize" Value="13"/>
             <Setter Property="IsReadOnly" Value="True"/>
             <Setter Property="VerticalScrollBarVisibility" Value="Auto"/>
             <Setter Property="HorizontalScrollBarVisibility" Value="Auto"/>
-            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="IsDocumentEnabled" Value="True"/>
+            <Setter Property="FontFamily" Value="Consolas"/>
         </Style>
 
         <!-- Close Button Style -->
@@ -121,12 +124,19 @@
                 </Grid>
             </Border>
 
-            <!-- Main Content: Scrollable, Read-Only TextBox -->
+            <!-- Main Content: RichTextBox with FlowDocument -->
             <Grid Margin="10,40,10,10">
-                <TextBox x:Name="ConsoleTextBox"
-                         Style="{StaticResource ConsoleTextBoxStyle}"
-                         AcceptsReturn="True"
-                         AcceptsTab="True" Background="#4C262626"/>
+                <RichTextBox x:Name="ConsoleTextBox"
+                         Style="{StaticResource ConsoleRichTextBoxStyle}"
+                         Background="#26262626">
+                    <!-- Using an even more transparent background here -->
+                    <RichTextBox.Resources>
+                        <!-- Override selection color to maintain theme -->
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightBrushKey}" Color="#3399FF" Opacity="0.4"/>
+                        <SolidColorBrush x:Key="{x:Static SystemColors.HighlightTextBrushKey}" Color="White"/>
+                    </RichTextBox.Resources>
+                    <!-- The document will be set programmatically -->
+                </RichTextBox>
             </Grid>
         </Grid>
     </Border>

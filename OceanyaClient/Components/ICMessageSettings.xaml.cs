@@ -513,7 +513,7 @@ namespace OceanyaClient.Components
             btnScreenshake.IsChecked = false;
             EffectDropdown.SelectedText = ICMessage.Effects.None.ToString();
             chkPreanim.IsChecked = false;
-            sfxDropdown.SelectedText = "";
+            sfxDropdown.SelectedText = "Default";
 
             OnResetMessageEffects?.Invoke();
         }

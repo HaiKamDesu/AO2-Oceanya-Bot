@@ -843,8 +843,13 @@ namespace OceanyaClient
             }
         }
 
-        private void CloseButton_Click(object sender, RoutedEventArgs e)
+        private async void CloseButton_Click(object sender, RoutedEventArgs e)
         {
+            foreach (var item in clients.Values)
+            {
+                await item.Disconnect();
+            }
+
             var config = new InitialConfigurationWindow();
             config.Activate();
             config.Show();
