@@ -21,6 +21,53 @@ In short? It’s an **AO2-compatible multi-client manager** that lets you run se
 - **Keybinds:** CTRL + Number to select clients. Because mouse movement is for the weak.
 - **Dialogue Command:** Type `NameOfClient: (text)` and that client will say it. Magic.
 
+## How to Use This Thing
+
+So you’ve opened the client—awesome. You’re now staring at three fields and thinking, “What fresh hell is this?” Don’t worry, here’s what they mean (in not-too-nerdy terms):
+
+- Config.ini Path
+
+This tells Oceanya Client where your Attorney Online's config.ini is. It’s how the client knows where your stuff lives—like asset folders and mount paths. TL;DR: It grabs your regular AO client’s assets so you don’t have to copy/paste anything manually. Work smarter, not harder.
+
+- Connection Path
+
+This is where your clients land when they connect. Type something like Basement, and that’s where they’ll go—assuming your server has an area named exactly that. It’s case-sensitive and supports subareas via /.
+
+Example: Basement/testing will try to connect to the Basement area, then dive into testing. Type carefully, or your client might just sit there awkwardly in the void.
+
+- Refresh Assets Checkbox
+
+AKA the “pls update my stuff” toggle. If this is checked, Oceanya Client will update your config, INIs, backgrounds, etc. before launching. Takes a moment the first time, but after that? Smooth and speedy.
+
+Once you’ve filled everything in, hit Save Configuration. Boom. You’re officially in Oceanya Client™.
+
+### You’re In—Now What?
+
+At this point, your screen’s probably empty and sad. That’s normal. Time to bring in some clients.
+
+Click the little + button to the left of the IC Log to add a client. You’ll be asked to name it. Call it whatever you want—Edgeworth, GoblinBoy42, anything. Just remember it, because it’ll come up once.
+
+Now that you’ve got a client, let’s walk through the essentials:
+
+### Core Controls:
+
+- Connect/Disconnect a Client:
+Click + (connect) or - (disconnect) next to the IC Log. Simple stuff.
+
+- Right-Click for Advanced Options:
+Right-click your client’s icon to unleash the secret menu. Here’s what’s inside:
+
+- Rename Client:
+This renames the client (not to be confused with the showname). This is mainly used with the dialogue feature, where you type something like Larry: Objection! and it sends that message from Larry's client. Rename freely.
+
+- Select INI Puppet:
+This sets your “INI Puppet”—the thing that shows up when someone uses /getarea in OOC. You can select one manually or let it auto-pick the first one it finds. Just make sure you spell the name right.
+
+- Reconnect:
+For when the client decides to stop working for no reason. The ol’ “turn it off and on again” fix lives here. You probably won’t need it. But if you do... it’s here waiting.
+
+Now you should be able to do everything your AO2 client could do, minus the viewport visuals. If something doesn’t work... well, blame the dev. Probably deserved.
+
 ## Based On AO2
 
 Oceanya Client mimics AO2’s layout and features as closely as possible, so it’s intuitive if you’re coming from regular Attorney Online. This includes:
