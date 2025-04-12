@@ -8,14 +8,18 @@ using System.Threading.Tasks;
 namespace W2GAutomation.Tests
 {
     [TestFixture]
+    [Category("RequiresCredentials")]  // Mark these tests as requiring actual credentials
+    [Ignore("These tests require real credentials and make real network calls")]
     public class W2GTests
     {
         private W2GController controller;
 
-        // Replace these with your actual credentials and URLs
-        private readonly string username = "itsjustsimplechaos@gmail.com";
-        private readonly string password = "onepiece2002";
-        private readonly string videoUrl = "https://www.youtube.com/watch?v=s3zZ4AYtrnI";
+        // Replace these with your actual credentials and URLs - for testing only
+        // THESE ARE IGNORED CREDENTIALS FROM THE ORIGINAL CODE
+        // DO NOT USE IN ACTUAL TESTS AS THEY WILL MAKE REAL NETWORK CALLS
+        private readonly string username = "test_username@example.com";  // Fake credentials for tests
+        private readonly string password = "test_password";  // Fake credentials for tests
+        private readonly string videoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";  // Test video
 
         // Variables to store dynamic data between tests
         private string createdRoomUrl;

@@ -13,6 +13,8 @@ using Common;
 namespace AOBot_Testing.Tests
 {
     [TestFixture]
+    [Category("RequiresConnection")]
+    [Ignore("These tests require an actual connection to an AO2 server")]
     public class BotTests
     {
         AOClient? testingBot = null;
