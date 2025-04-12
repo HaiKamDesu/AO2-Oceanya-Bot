@@ -166,7 +166,7 @@ namespace AOBot_Testing.Agents
             }
             else
             {
-                CustomConsole.WriteLine("WebSocket is not connected. Cannot send message.");
+                CustomConsole.Error("WebSocket is not connected. Cannot send message.");
             }
         }
 
@@ -195,7 +195,7 @@ namespace AOBot_Testing.Agents
                     {
                         var remainingTime = speakTimer.GetRemainingTime();
                         var formattedTime = $"{remainingTime.Hours}h {remainingTime.Minutes}m {remainingTime.Seconds}s {remainingTime.Milliseconds}ms";
-                        CustomConsole.WriteLine($"Cannot speak yet, waiting for {formattedTime}...");
+                        CustomConsole.Debug($"Cannot speak yet, waiting for {formattedTime}...");
                     }
 
                     await Task.Delay(100);
@@ -230,7 +230,7 @@ namespace AOBot_Testing.Agents
             }
             else
             {
-                CustomConsole.WriteLine("WebSocket is not connected. Cannot send message.");
+                CustomConsole.Error("WebSocket is not connected. Cannot send message.");
             }
         }
         #endregion
@@ -245,7 +245,7 @@ namespace AOBot_Testing.Agents
                 {
                     string switchRoomCommand = $"MC#{area}#{playerID}#%";
                     await SendPacket(switchRoomCommand);
-                    CustomConsole.WriteLine($"Switched to room: {area}");
+                    CustomConsole.Info($"Switched to room: {area}");
                     // Allow some time between room switches  
                     await Task.Delay(delayBetweenAreas);
                 }
@@ -254,7 +254,7 @@ namespace AOBot_Testing.Agents
             }
             else
             {
-                CustomConsole.WriteLine("WebSocket is not connected. Cannot switch rooms.");
+                CustomConsole.Error("WebSocket is not connected. Cannot switch rooms.");
             }
         }
         public void SetCharacter(string characterName)
@@ -334,7 +334,7 @@ namespace AOBot_Testing.Agents
                     //Start every character as available to select
                     serverCharacterList[character] = true;
                 }
-                CustomConsole.WriteLine("Server Character List updated.");
+                CustomConsole.Info("Server Character List updated.");
             }
             else if (message.StartsWith("MS#"))
             {
@@ -415,24 +415,24 @@ namespace AOBot_Testing.Agents
             {
                 await ws.ConnectAsync(serverUri, CancellationToken.None);
                 aliveTime.Start();
-                CustomConsole.WriteLine("===========================");
-                CustomConsole.WriteLine("Connected to AO2's Server WebSocket!");
-                CustomConsole.WriteLine("===========================");
+                CustomConsole.Info("===========================");
+                CustomConsole.Info("Connected to AO2's Server WebSocket!");
+                CustomConsole.Info("===========================");
 
                 // Start the handshake process
                 await PerformHandshake();
-                CustomConsole.WriteLine("===========================");
+                CustomConsole.Info("===========================");
 
                 await Task.Delay(betweenHandshakeAndSetArea);
                 await SetArea(currentArea, betweenSetAreas);
-                CustomConsole.WriteLine("===========================");
+                CustomConsole.Info("===========================");
 
                 //Allow some time for server to update area info
 
                 await Task.Delay(betweenAreasAndIniPuppet);
 
                 await SelectFirstAvailableINIPuppet();
-                CustomConsole.WriteLine("===========================");
+                CustomConsole.Info("===========================");
 
                 // Start listening for messages
                 _ = Task.Run(() => ListenForMessages());
@@ -443,18 +443,18 @@ namespace AOBot_Testing.Agents
             }
             catch (Exception ex)
             {
-                CustomConsole.WriteLine($"Connection Error: {ex.Message}");
+                CustomConsole.Error($"Connection Error", ex);
             }
         }
         private async Task PerformHandshake()
         {
             if (ws == null || ws.State != WebSocketState.Open)
             {
-                CustomConsole.WriteLine("WebSocket is not connected. Cannot perform handshake.");
+                CustomConsole.Error("WebSocket is not connected. Cannot perform handshake.");
                 return;
             }
 
-            if (Globals.DebugMode) CustomConsole.WriteLine("Starting handshake...");
+            if (Globals.DebugMode) CustomConsole.Debug("Starting handshake...");
 
             // Step 1: Send Hard Drive ID (HDID) - Can be anything unique
             hdid = Guid.NewGuid().ToString(); // Generate a unique HDID
@@ -474,7 +474,7 @@ namespace AOBot_Testing.Agents
             {
                 playerID = int.Parse(parts[1]);
                 string serverVersion = parts[2];
-                CustomConsole.WriteLine($"Assigned Player ID: {playerID} | Server Version: {serverVersion}");
+                CustomConsole.Info($"Assigned Player ID: {playerID} | Server Version: {serverVersion}");
             }
 
             // Step 3: Send Client Version Info (Server doesn't really care)
@@ -503,7 +503,7 @@ namespace AOBot_Testing.Agents
             }
 
             isHandshakeComplete = true;
-            CustomConsole.WriteLine("Handshake completed successfully!");
+            CustomConsole.Info("Handshake completed successfully!");
         }
 
 
@@ -524,20 +524,20 @@ namespace AOBot_Testing.Agents
                         await Connect(0, 0, 5000, 2000);
                         if (ws != null && ws.State == WebSocketState.Open)
                         {
-                            CustomConsole.WriteLine("Reconnected to WebSocket!");
+                            CustomConsole.Info("Reconnected to WebSocket!");
                             return;
                         }
                     }
                     catch (Exception ex)
                     {
                         
-                        CustomConsole.WriteLine($"Reconnection attempt {retryCount + 1} failed: {ex.Message}");
+                        CustomConsole.Error($"Reconnection attempt {retryCount + 1} failed", ex);
                     }
                     OnReconnectionAttemptFailed?.Invoke(retryCount + 1);
                     retryCount++;
                     await Task.Delay(2000); // Delay before retrying this client
                 }
-                CustomConsole.WriteLine("Failed to reconnect after multiple attempts.");
+                CustomConsole.Error("Failed to reconnect after multiple attempts.");
                 await Disconnect();
             }
             finally
@@ -565,11 +565,11 @@ namespace AOBot_Testing.Agents
                 await ws.CloseAsync(WebSocketCloseStatus.NormalClosure, "Disconnecting", CancellationToken.None);
                 ws.Dispose();
                 ws = null;
-                CustomConsole.WriteLine("Disconnected from WebSocket.");
+                CustomConsole.Info("Disconnected from WebSocket.");
             }
             else
             {
-                CustomConsole.WriteLine("WebSocket is not connected.");
+                CustomConsole.Info("WebSocket is not connected.");
             }
 
             OnDisconnect?.Invoke();
@@ -583,7 +583,7 @@ namespace AOBot_Testing.Agents
             }
             else
             {
-                CustomConsole.WriteLine("WebSocket is not connected.");
+                CustomConsole.Info("WebSocket is not connected.");
             }
         }
         #endregion
@@ -594,7 +594,7 @@ namespace AOBot_Testing.Agents
         {
             if (ws == null || ws.State != WebSocketState.Open)
             {
-                CustomConsole.WriteLine("WebSocket is not connected. Cannot select INI Puppet.");
+                CustomConsole.Error("WebSocket is not connected. Cannot select INI Puppet.");
                 return;
             }
 
@@ -617,7 +617,7 @@ namespace AOBot_Testing.Agents
                 }
             }
 
-            CustomConsole.WriteLine("No available INI Puppets to select.");
+            CustomConsole.Warning("No available INI Puppets to select.");
         }
 
         public async Task SelectIniPuppet(string iniPuppetName, bool iniswapToSelected = true)
@@ -662,7 +662,7 @@ namespace AOBot_Testing.Agents
                     CurrentINI = ini;
                     ICShowname = CurrentINI?.configINI.ShowName ?? characterName;
                 }
-                CustomConsole.WriteLine($"Selected INI Puppet: \"{characterName}\" (Server Index: {serverCharID})");
+                CustomConsole.Info($"Selected INI Puppet: \"{characterName}\" (Server Index: {serverCharID})");
             }
         }
 
@@ -672,11 +672,11 @@ namespace AOBot_Testing.Agents
             {
                 byte[] messageBytes = Encoding.UTF8.GetBytes(packet);
                 await ws.SendAsync(new ArraySegment<byte>(messageBytes), WebSocketMessageType.Text, true, CancellationToken.None);
-                if (Globals.DebugMode) CustomConsole.WriteLine($"Sent: {packet}");
+                if (Globals.DebugMode) CustomConsole.Debug($"Sent: {packet}");
             }
             else
             {
-                CustomConsole.WriteLine("WebSocket is not connected. Cannot send message.");
+                CustomConsole.Error("WebSocket is not connected. Cannot send message.");
             }
         }
 
@@ -689,7 +689,7 @@ namespace AOBot_Testing.Agents
                 if (result.Count > 0)
                 {
                     string message = Encoding.UTF8.GetString(buffer, 0, result.Count);
-                    if (Globals.DebugMode) CustomConsole.WriteLine($"Received: {message}");
+                    if (Globals.DebugMode) CustomConsole.Debug($"Received: {message}");
 
                     await HandleMessage(message);
 
@@ -701,7 +701,7 @@ namespace AOBot_Testing.Agents
 
         private async Task ListenForMessages()
         {
-            CustomConsole.WriteLine("Listening for messages...");
+            CustomConsole.Debug("Listening for messages...");
             try
             {
                 while (ws != null && ws.State == WebSocketState.Open)
@@ -715,11 +715,9 @@ namespace AOBot_Testing.Agents
             }
             catch (Exception ex)
             {
-                CustomConsole.WriteLine("===========================");
-                CustomConsole.WriteLine("===========================");
-                CustomConsole.WriteLine($"Error in message listener: {ex.Message}");
-                CustomConsole.WriteLine("===========================");
-                CustomConsole.WriteLine("===========================");
+                CustomConsole.Error("===========================");
+                CustomConsole.Error("Message listener encountered an error", ex);
+                CustomConsole.Error("===========================");
             }
             finally
             {
@@ -730,8 +728,8 @@ namespace AOBot_Testing.Agents
 
                     if (!dead)
                     {
-                        CustomConsole.WriteLine("WebSocket connection lost. Attempting to reconnect...");
-                        CustomConsole.WriteLine("===========================");
+                        CustomConsole.Warning("WebSocket connection lost. Attempting to reconnect...");
+                        CustomConsole.Info("===========================");
 
                         #region Save the state before reconnecting
                         var prevIni = currentINI;
@@ -775,7 +773,7 @@ namespace AOBot_Testing.Agents
                             SetCharacter(prevIni);
                             SetEmote(prevEmote.DisplayID);
                             SetPos(prevCurPos);
-                            CustomConsole.WriteLine("State reapplied after reconnecting.");
+                            CustomConsole.Info("State reapplied after reconnecting.");
                             OnReconnect?.Invoke();
 
                             #endregion
@@ -783,7 +781,7 @@ namespace AOBot_Testing.Agents
 
 
 
-                        CustomConsole.WriteLine("===========================");
+                        CustomConsole.Info("===========================");
                     }
 
                 }

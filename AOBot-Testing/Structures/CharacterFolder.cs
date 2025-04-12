@@ -21,7 +21,7 @@ namespace AOBot_Testing.Structures
                     if (File.Exists(cacheFile))
                     {
                         characterConfigs = LoadFromJson(cacheFile);
-                        CustomConsole.WriteLine($"Loaded {characterConfigs.Count} characters from cache.");
+                        CustomConsole.Info($"Loaded {characterConfigs.Count} characters from cache.");
                     }
                     else
                     {
@@ -52,7 +52,7 @@ namespace AOBot_Testing.Structures
                         {
                             //Add new character
                             var config = Structures.CharacterFolder.Create(iniFilePath);
-                            CustomConsole.WriteLine("Parsed Character: " + config.Name + $" ({CharacterFolder})");
+                            CustomConsole.Debug($"Parsed Character: {config.Name} ({CharacterFolder})");
                             characterConfigs.Add(config);
                             onParsedCharacter?.Invoke(config);
                         }
@@ -70,7 +70,7 @@ namespace AOBot_Testing.Structures
 
             // Save to JSON file for fast future loading
             SaveToJson(cacheFile, characterConfigs);
-            CustomConsole.WriteLine("Character list saved to cache.");
+            CustomConsole.Info("Character list saved to cache.");
         }
 
         static JsonSerializerOptions jsonOptions = new JsonSerializerOptions { WriteIndented = true };

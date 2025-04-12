@@ -182,22 +182,44 @@ namespace AOBot_Testing.Structures
         {
             if (!message.StartsWith("MS#"))
             {
-                CustomConsole.WriteLine("❌ Invalid IC message format.");
+                CustomConsole.Warning($"Invalid IC message format: {message}");
                 return null;
             }
 
             string[] parts = message.Split('#');
             if (parts.Length < 31) // Ensure the message has all expected fields
             {
-                CustomConsole.WriteLine("⚠️ Incomplete IC message received.");
+                CustomConsole.Warning($"Incomplete IC message received. Expected at least 31 parts, got {parts.Length}");
+                CustomConsole.Debug($"Message content: {message}");
                 return null;
             }
 
             try
             {
-                var selfOffsetParts = parts[20].Split('<', '>');
-                var selfOffset = (Horizontal: int.TryParse(selfOffsetParts[0], out int horizontal) ? horizontal : 0,
-                                    Vertical: int.TryParse(selfOffsetParts[1], out int vertical) ? vertical : 0);
+                // Handle SelfOffset safely, ensuring it properly parses even with special characters
+                var selfOffset = (Horizontal: 0, Vertical: 0);
+                try {
+                    if (parts[20].Contains("<and>")) 
+                    {
+                        var offsetParts = parts[20].Split(new[] { "<and>" }, StringSplitOptions.None);
+                        selfOffset = (
+                            Horizontal: int.TryParse(offsetParts[0], out int h) ? h : 0,
+                            Vertical: int.TryParse(offsetParts[1], out int v) ? v : 0
+                        );
+                    }
+                    else if (parts[20].Contains("<") && parts[20].Contains(">"))
+                    {
+                        var selfOffsetParts = parts[20].Split('<', '>');
+                        selfOffset = (
+                            Horizontal: int.TryParse(selfOffsetParts[0], out int horizontal) ? horizontal : 0,
+                            Vertical: int.TryParse(selfOffsetParts[1], out int vertical) ? vertical : 0
+                        );
+                    }
+                } 
+                catch (Exception ex) 
+                {
+                    CustomConsole.Warning($"Failed to parse SelfOffset '{parts[20]}'", ex);
+                }
 
                 DeskMods deskMod;
                 if (parts[8] == "chat")
@@ -226,7 +248,9 @@ namespace AOBot_Testing.Structures
                     Flip = parts[13] == "1",
                     Realization = parts[14] == "1",
                     TextColor = int.TryParse(parts[15], out int textColor) ? (TextColors)textColor : TextColors.White,
-                    ShowName = string.IsNullOrEmpty(parts[16]) ? CharacterFolder.FullList.First(ini => ini.Name == parts[3]).configINI.ShowName : Globals.ReplaceTextForSymbols(parts[16]),
+                    ShowName = string.IsNullOrEmpty(parts[16]) ? 
+                        CharacterFolder.FullList.FirstOrDefault(ini => ini.Name == parts[3])?.configINI?.ShowName ?? parts[3] : 
+                        Globals.ReplaceTextForSymbols(parts[16]),
                     OtherCharId = int.TryParse(parts[17], out int otherCharId) ? otherCharId : -1,
                     OtherName = parts[18],
                     OtherEmote = parts[19],
@@ -247,7 +271,9 @@ namespace AOBot_Testing.Structures
             }
             catch (Exception ex)
             {
-                CustomConsole.WriteLine($"❌ Error parsing IC message: {ex.Message}");
+                // Use the enhanced logging with detailed error info
+                CustomConsole.Error($"Failed to parse IC message", ex);
+                CustomConsole.Debug($"Message content: {message}");
                 return null;
             }
         }
