@@ -39,9 +39,20 @@ Claude should NOT copy this code directly but use it to understand patterns and 
 
 ## Environment Limitations
 - **Linux/WSL Environment**: Building and running the main application in a Linux or WSL environment is not supported as the project uses WPF, which requires Windows
-  - However, the `LinuxCompatibleTests` project can be built and run in Linux environments
 - **Docker**: Building in a Docker container requires a Windows-based container with .NET SDK 8.0 installed
-- **CI/CD**: Use Windows runners for build pipelines, or Linux runners for the Linux-compatible tests
+- **CI/CD**: Use Windows runners for build pipelines
+
+## Claude Code Guidelines
+- **Building and Running .NET 8.0-windows Applications**: Claude Code cannot build, run, or directly test .NET 8.0-windows applications as it operates in a Linux environment without .NET SDK
+  - When asked to build or run Windows-specific .NET applications, decline the request and explain that this is not possible in the current environment
+  - Building and verifying the application must be done in a Windows environment with .NET SDK 8.0 installed
+- **Framework Updates**: Do not attempt to update the .NET framework version as this requires testing in a Windows environment
+- **Code Quality Best Practices**:
+  - Always update CLAUDE.md when adding new functionalities or modifying existing behaviors
+  - Keep code changes focused on the specific task requested
+  - Maintain consistency with existing coding patterns and styles
+  - When creating Git commits, provide clear descriptions without mentioning Claude Code
+  - Add XML documentation for all public methods, properties, and classes
 
 ## Known Test Issues
 The unit tests in this project have several failing tests:
@@ -112,50 +123,16 @@ A comprehensive set of unit tests in `GlobalsTests.cs` verifies all aspects of s
 - Edge cases like backslashes at string ends
 - Complex combinations of escaped and non-escaped characters
 
-#### Windows-Specific Tests
-The main tests must be run in a Windows environment using: 
+#### Tests
+The tests must be run in a Windows environment using: 
 ```
 dotnet test UnitTests/GlobalsTests.cs
 ```
 
-#### Linux-Compatible Tests
-For testing in Linux environments (including Claude Code's environment), a separate project has been created:
+#### Testing in Windows
+Tests must be run in a Windows environment using Visual Studio or the dotnet CLI:
 ```
-dotnet test LinuxCompatibleTests/LinuxCompatibleTests.csproj
-```
-
-This Linux-compatible test project:
-- Contains the same tests but without Windows-specific dependencies
-- Targets standard .NET 8.0 (not Windows-specific)
-- Can be run in any environment that supports .NET 8.0
-- Is particularly useful for automated testing in CI/CD pipelines or in non-Windows environments
-
-#### Python Test Script
-For environments where .NET is not available, a Python implementation of the tests is provided:
-```
-python3 LinuxCompatibleTests/test_special_chars.py
+dotnet test UnitTests/GlobalsTests.cs
 ```
 
-This script:
-- Implements the core special character handling logic in Python
-- Runs the same test cases as the C# tests
-- Only requires Python 3 (which is available in most environments)
-- Provides detailed output for debugging any issues
-
-The Python test script has been fully tested and all tests pass correctly.
-
-### Standalone Test Application
-
-To make testing easier, especially in environments where running the full unit tests might be difficult, a standalone test application has been created:
-
-1. **SpecialCharacterTest Project**: A simple console application that:
-   - Runs all the special character handling tests automatically
-   - Provides an interactive mode to test your own inputs
-   - Does not require the test framework or WPF dependencies
-
-2. **How to run**:
-   - Open the `SpecialCharacterTest.sln` solution in Visual Studio
-   - Press F5 to build and run
-   - Or from the command line: `dotnet run --project SpecialCharacterTest/SpecialCharacterTest.csproj`
-
-3. **Cross-platform compatible**: Unlike the main application and unit tests which require Windows for WPF, this tester uses .NET 8.0 (not Windows-specific) and can run on any platform that supports .NET 8.0.
+The test implementation in `GlobalsTests.cs` covers all aspects of special character handling with comprehensive test cases.
