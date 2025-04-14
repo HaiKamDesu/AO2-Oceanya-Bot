@@ -32,7 +32,11 @@ namespace UnitTests
                 string destinationPath = Path.Combine(destinationDirectory, relativePath);
 
                 // Ensure the directory exists in the destination
-                Directory.CreateDirectory(Path.GetDirectoryName(destinationPath));
+                string? dirPath = Path.GetDirectoryName(destinationPath);
+                if (dirPath != null)
+                {
+                    Directory.CreateDirectory(dirPath);
+                }
 
                 // Copy the file
                 File.Copy(file, destinationPath, true);
@@ -109,7 +113,7 @@ namespace UnitTests
             }
         }
 
-        CountdownTimer timer;
+        CountdownTimer? timer;
         [Test]
         public async Task TestM_INITesting()
         {

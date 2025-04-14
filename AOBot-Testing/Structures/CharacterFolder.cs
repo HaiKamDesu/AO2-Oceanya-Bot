@@ -7,6 +7,9 @@ namespace AOBot_Testing.Structures
     [Serializable]
     public class CharacterFolder
     {
+        public string ShowName { get; set; } = string.Empty;
+        public string Gender { get; set; } = string.Empty;
+        public string Side { get; set; } = string.Empty;
         #region Static methods
         public static List<string> CharacterFolders => Globals.BaseFolders.Select(x => Path.Combine(x, "characters")).ToList();
         static string cacheFile = Path.Combine(Path.GetTempPath(), "characters.json");
@@ -33,7 +36,7 @@ namespace AOBot_Testing.Structures
             }
         }
 
-        public static void RefreshCharacterList(Action<CharacterFolder> onParsedCharacter = null, Action<string> onChangedMountPath = null)
+        public static void RefreshCharacterList(Action<CharacterFolder>? onParsedCharacter = null, Action<string>? onChangedMountPath = null)
         {
             foreach (var CharacterFolder in CharacterFolders)
             {

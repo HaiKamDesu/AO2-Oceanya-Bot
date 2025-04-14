@@ -534,16 +534,16 @@ namespace OceanyaClient
                 while (attempt < maxRetries && !success)
                 {
                     attempt++;
-                    if (Globals.DebugMode) CustomConsole.WriteLine($"Prompting AI..." + (attempt > 0 ? " (Attempt {attempt})" : ""));
+                    if (Globals.DebugMode) CustomConsole.Debug($"Prompting AI..." + (attempt > 0 ? " (Attempt {attempt})" : ""));
                     string response = await gptClient.GetResponseAsync(chatLog.GetFormattedChatHistory());
-                    if (Globals.DebugMode) CustomConsole.WriteLine("Received AI response: " + response);
+                    if (Globals.DebugMode) CustomConsole.Debug("Received AI response: " + response);
 
                     success = await ValidateJsonResponse(bot, response);
                 }
 
                 if (!success)
                 {
-                    CustomConsole.WriteLine("ERROR: AI failed to return a valid response after multiple attempts.");
+                    CustomConsole.Error("ERROR: AI failed to return a valid response after multiple attempts.");
                 }
             };
 
@@ -563,7 +563,7 @@ namespace OceanyaClient
                 var responseJson = JsonSerializer.Deserialize<Dictionary<string, object>>(response);
                 if (responseJson == null)
                 {
-                    CustomConsole.WriteLine("ERROR: AI response is not valid JSON. Retrying...");
+                    CustomConsole.Error("ERROR: AI response is not valid JSON. Retrying...");
                     return success;
                 }
 
@@ -572,7 +572,7 @@ namespace OceanyaClient
                     !responseJson.ContainsKey("showname") || !responseJson.ContainsKey("current_character") ||
                     !responseJson.ContainsKey("modifiers"))
                 {
-                    CustomConsole.WriteLine("ERROR: AI response is missing required fields. Retrying...");
+                    CustomConsole.Error("ERROR: AI response is missing required fields. Retrying...");
                     return success;
                 }
 
@@ -584,7 +584,7 @@ namespace OceanyaClient
                 // Ensure chatlogType is either "IC" or "OOC"
                 if (chatlogType != "IC" && chatlogType != "OOC")
                 {
-                    CustomConsole.WriteLine($"ERROR: Invalid chatlog type '{chatlogType}', retrying...");
+                    CustomConsole.Error($"ERROR: Invalid chatlog type '{chatlogType}', retrying...");
                     return success;
                 }
 
@@ -611,7 +611,7 @@ namespace OceanyaClient
                             bot.deskMod = (ICMessage.DeskMods)deskModValue;
                         else
                         {
-                            CustomConsole.WriteLine("ERROR: Invalid deskMod value. Retrying...");
+                            CustomConsole.Error("ERROR: Invalid deskMod value. Retrying...");
                             return success;
                         }
 
@@ -619,7 +619,7 @@ namespace OceanyaClient
                             bot.emoteMod = (ICMessage.EmoteModifiers)emoteModValue;
                         else
                         {
-                            CustomConsole.WriteLine("ERROR: Invalid emoteMod value. Retrying...");
+                            CustomConsole.Error("ERROR: Invalid emoteMod value. Retrying...");
                             return success;
                         }
 
@@ -627,7 +627,7 @@ namespace OceanyaClient
                             bot.shoutModifiers = (ICMessage.ShoutModifiers)shoutModValue;
                         else
                         {
-                            CustomConsole.WriteLine("ERROR: Invalid shoutModifiers value. Retrying...");
+                            CustomConsole.Error("ERROR: Invalid shoutModifiers value. Retrying...");
                             return success;
                         }
 
@@ -635,7 +635,7 @@ namespace OceanyaClient
                             bot.flip = flipValue == 1;
                         else
                         {
-                            CustomConsole.WriteLine("ERROR: Invalid flip value. Retrying...");
+                            CustomConsole.Error("ERROR: Invalid flip value. Retrying...");
                             return success;
                         }
 
@@ -651,7 +651,7 @@ namespace OceanyaClient
                             bot.textColor = (ICMessage.TextColors)textColorValue;
                         else
                         {
-                            CustomConsole.WriteLine("ERROR: Invalid textColor value. Retrying...");
+                            CustomConsole.Error("ERROR: Invalid textColor value. Retrying...");
                             return success;
                         }
 
@@ -659,7 +659,7 @@ namespace OceanyaClient
                             bot.Immediate = immediateValue == 1;
                         else
                         {
-                            CustomConsole.WriteLine("ERROR: Invalid immediate value. Retrying...");
+                            CustomConsole.Error("ERROR: Invalid immediate value. Retrying...");
                             return success;
                         }
 
@@ -667,13 +667,13 @@ namespace OceanyaClient
                             bot.Additive = additiveValue == 1;
                         else
                         {
-                            CustomConsole.WriteLine("ERROR: Invalid additive value. Retrying...");
+                            CustomConsole.Error("ERROR: Invalid additive value. Retrying...");
                             return success;
                         }
                     }
                     else
                     {
-                        CustomConsole.WriteLine("ERROR: AI response modifiers section is invalid. Retrying...");
+                        CustomConsole.Error("ERROR: AI response modifiers section is invalid. Retrying...");
                         return success;
                     }
                 }
@@ -693,7 +693,7 @@ namespace OceanyaClient
                 }
                 else
                 {
-                    CustomConsole.WriteLine("ERROR: AI response message is empty. Retrying...");
+                    CustomConsole.Error("ERROR: AI response message is empty. Retrying...");
                     return success;
                 }
 
@@ -701,7 +701,7 @@ namespace OceanyaClient
             }
             catch (Exception ex)
             {
-                CustomConsole.WriteLine($"ERROR: Exception while processing AI response - {ex.Message}. Retrying...");
+                CustomConsole.Error($"ERROR: Exception while processing AI response - {ex.Message}. Retrying...");
             }
 
             return success;

@@ -20,7 +20,7 @@ namespace AOBot_Testing.Tests
         AOClient? testingBot = null;
         bool listeningForConfirmation = false;
         bool receivedMessage = false;
-        string message = "";
+        string message = string.Empty;
 
         [OneTimeSetUp]
         public void Setup()
@@ -29,7 +29,9 @@ namespace AOBot_Testing.Tests
             testingBot.Connect().Wait();
             testingBot.SetCharacter("Franziska");
 
-            testingBot.OnMessageReceived += (string chatLogType, string characterName, string showName, string message, int iniPuppetID) =>
+            if (testingBot != null)
+            {
+                testingBot.OnMessageReceived += (string chatLogType, string characterName, string showName, string message, int iniPuppetID) =>
             {
                 if (!listeningForConfirmation)
                 {
@@ -55,6 +57,7 @@ namespace AOBot_Testing.Tests
                 receivedMessage = true;
                 this.message = message;
             };
+            }
         }
 
         [OneTimeTearDown]

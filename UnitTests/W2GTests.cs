@@ -12,7 +12,7 @@ namespace W2GAutomation.Tests
     [Ignore("These tests require real credentials and make real network calls")]
     public class W2GTests
     {
-        private W2GController controller;
+        private W2GController controller = null!;
 
         // Replace these with your actual credentials and URLs - for testing only
         // THESE ARE IGNORED CREDENTIALS FROM THE ORIGINAL CODE
@@ -22,7 +22,7 @@ namespace W2GAutomation.Tests
         private readonly string videoUrl = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";  // Test video
 
         // Variables to store dynamic data between tests
-        private string createdRoomUrl;
+        private string createdRoomUrl = string.Empty;
         private readonly string testLogFile = "w2g_test_log.txt";
 
         [SetUp]

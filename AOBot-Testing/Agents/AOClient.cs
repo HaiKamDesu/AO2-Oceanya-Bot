@@ -15,7 +15,7 @@ namespace AOBot_Testing.Agents
         private readonly Uri serverUri = new Uri(serverAddress);
         private ClientWebSocket? ws; // WebSocket instance
         public Stopwatch aliveTime = new Stopwatch();
-        private CountdownTimer speakTimer;
+        private CountdownTimer? speakTimer;
         bool AbleToSpeak { get; set; } = true;
 
         private bool isHandshakeComplete = false;
@@ -29,7 +29,7 @@ namespace AOBot_Testing.Agents
         public string iniPuppetName => iniPuppetID == -1 ? "" : serverCharacterList.ElementAt(iniPuppetID).Key;
         public static string lastCharsCheck = string.Empty;
 
-        string hdid;
+        string hdid = Guid.NewGuid().ToString();
 
         public int playerID;
         private string currentArea = location;
@@ -74,18 +74,18 @@ namespace AOBot_Testing.Agents
             }
         }
 
-        public Action<string, string, string, string, int> OnMessageReceived;
-        public Action<ICMessage> OnICMessageReceived;
-        public Action<string, string, bool> OnOOCMessageReceived;
-        public Action<CharacterFolder> OnChangedCharacter;
-        public Action<string> OnBGChange;
-        public Action<string> OnSideChange;
-        public Action OnINIPuppetChange; 
-        public Action<int> OnReconnectionAttempt;
-        public Action<int> OnReconnectionAttemptFailed;
-        public Action OnReconnect;
-        public Action OnWebsocketDisconnect;
-        public Action OnDisconnect;
+        public Action<string, string, string, string, int>? OnMessageReceived;
+        public Action<ICMessage>? OnICMessageReceived;
+        public Action<string, string, bool>? OnOOCMessageReceived;
+        public Action<CharacterFolder>? OnChangedCharacter;
+        public Action<string>? OnBGChange;
+        public Action<string>? OnSideChange;
+        public Action? OnINIPuppetChange; 
+        public Action<int>? OnReconnectionAttempt;
+        public Action<int>? OnReconnectionAttemptFailed;
+        public Action? OnReconnect;
+        public Action? OnWebsocketDisconnect;
+        public Action? OnDisconnect;
 
         private List<string> pendingMessages = new List<string>();
         #region Send Message Methods

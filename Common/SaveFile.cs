@@ -26,7 +26,7 @@ namespace OceanyaClient
             "savefile.json"
         );
 
-        private static SaveData _data;
+        private static SaveData _data = new SaveData();
 
         static SaveFile()
         {
@@ -69,7 +69,11 @@ namespace OceanyaClient
         {
             try
             {
-                Directory.CreateDirectory(Path.GetDirectoryName(saveFilePath));
+                string? directoryName = Path.GetDirectoryName(saveFilePath);
+                if (directoryName != null)
+                {
+                    Directory.CreateDirectory(directoryName);
+                }
                 var json = JsonSerializer.Serialize(_data, new JsonSerializerOptions { WriteIndented = true });
                 File.WriteAllText(saveFilePath, json);
             }

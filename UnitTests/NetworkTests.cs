@@ -265,7 +265,7 @@ namespace UnitTests
             }
         }
 
-        private MockAO2Server _mockServer;
+        private MockAO2Server _mockServer = null!;
         private const string MockServerUrl = "http://localhost:8080/";
         private const string MockWebSocketUrl = "ws://localhost:8080/";
         

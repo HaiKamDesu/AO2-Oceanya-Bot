@@ -22,9 +22,9 @@ namespace AOBot_Testing.Structures
         };
 
 
-        public string Name { get; set; }
-        public string PathToFile { get; set; }
-        public List<string> bgImages { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string PathToFile { get; set; } = string.Empty;
+        public List<string> bgImages { get; set; } = new List<string>();
 
         public Background() { }
 
@@ -37,7 +37,7 @@ namespace AOBot_Testing.Structures
                 if (Directory.Exists(bgFolder))
                 {
                     var newBG = new Background();
-                    newBG.Name = Path.GetDirectoryName(bgFolder);
+                    newBG.Name = Path.GetDirectoryName(bgFolder) ?? curBG;
                     newBG.PathToFile = bgFolder;
 
                     var bgFiles = Directory.GetFiles(bgFolder, "*.*", SearchOption.TopDirectoryOnly);

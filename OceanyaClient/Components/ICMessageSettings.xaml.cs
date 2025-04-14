@@ -140,7 +140,7 @@ namespace OceanyaClient.Components
             else
             {
                 // Handle the error if the color cannot be parsed
-                CustomConsole.WriteLine($"Invalid color: {newEffect}");
+                CustomConsole.Error($"Invalid color: {newEffect}");
             }
         }
 
@@ -156,7 +156,7 @@ namespace OceanyaClient.Components
             else
             {
                 // Handle the error if the color cannot be parsed
-                CustomConsole.WriteLine($"Invalid color: {newColor}");
+                CustomConsole.Error($"Invalid color: {newColor}");
             }
         }
 
@@ -191,9 +191,7 @@ namespace OceanyaClient.Components
             }
             else
             {
-                //handle error in customconsole.writeline method
-                CustomConsole.WriteLine($"Character {iniName} not found.");
-
+                CustomConsole.Error($"Character {iniName} not found.");
             }
         }
 

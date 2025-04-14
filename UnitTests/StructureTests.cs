@@ -87,8 +87,8 @@ namespace UnitTests
     public class BackgroundTests
     {
         // We'll need to mock some file system behavior for testing
-        private string _tempDir;
-        private List<string> _originalBaseFolders;
+        private string _tempDir = string.Empty;
+        private List<string> _originalBaseFolders = new List<string>();
         
         [SetUp]
         public void SetUp()

@@ -639,7 +639,7 @@ namespace AOBot_Testing.Agents
             }
         }
         // Class-level variable to cache the iframe element.
-        private IWebElement cachedFrame;
+        private IWebElement? cachedFrame;
         public void YoutubeVideoLoader_FrameSwitch()
         {
 
