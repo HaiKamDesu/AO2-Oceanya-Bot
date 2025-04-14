@@ -23,7 +23,7 @@ In short? It’s an **AO2-compatible multi-client manager** that lets you run se
 
 ## How to Install
 
-1. **Go to the [Releases page](https://github.com/YOUR_USERNAME/YOUR_REPO_NAME/releases)** on this GitHub repository.
+1. **Go to the [Releases page](https://github.com/HaiKamDesu/AO2-Oceanya-Bot/releases)** on this GitHub repository.
 2. Download the latest `.rar` file from the most recent release.
 3. Extract the `.rar` wherever you want.
 4. Run the executable.
