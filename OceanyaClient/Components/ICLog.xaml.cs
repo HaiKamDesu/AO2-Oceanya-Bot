@@ -89,7 +89,9 @@ namespace OceanyaClient.Components
                 paragraph.Inlines.Add(nameRun);
             }
 
-            paragraph.Inlines.AddRange(FormatMessageText(message, textColor));
+            // Process special characters first, then format the message text
+            string processedMessage = Globals.ProcessSpecialCharacters(message);
+            paragraph.Inlines.AddRange(FormatMessageText(processedMessage, textColor));
 
             // Add the new paragraph based on whether the log is inverted.
             if (clientLogs[client].inverted)

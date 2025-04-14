@@ -24,7 +24,8 @@ public static class Globals
         {
             var filePath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "server.json");
             var json = File.ReadAllText(filePath);
-            return JsonSerializer.Deserialize<Dictionary<Servers, string>>(json);
+            var result = JsonSerializer.Deserialize<Dictionary<Servers, string>>(json);
+            return result ?? new Dictionary<Servers, string>();
 
         }
         catch
@@ -139,6 +140,18 @@ Each of these settings has predefined integer values. **If a change is requested
         { "<and>", "&" },
     };
 
+    // Special characters that should be handled when rendering text
+    public static Dictionary<char, bool> SpecialCharacters = new Dictionary<char, bool>()
+    {
+        { '-', true },
+        { '"', true },
+        { '\\', false },  // Backslash is used for escaping, not hidden itself
+        { 's', false },  // Only special when preceded by backslash (\\s)
+        { '~', true },
+        { '{', true },
+        { '}', true },
+    };
+
     public static List<string> AllowedImageExtensions = new List<string> { "apng", "webp", "gif", "png", "jpg", "jpeg", "pdn" };
 
 
@@ -171,7 +184,12 @@ Each of these settings has predefined integer values. **If a change is requested
             }
         }
 
-        List<string> mountPaths = new List<string>() { Path.GetDirectoryName(pathToConfigINI) };
+        List<string> mountPaths = new List<string>();
+        string? configDirectory = Path.GetDirectoryName(pathToConfigINI);
+        if (configDirectory != null)
+        {
+            mountPaths.Add(configDirectory);
+        }
 
         if (mountPathsRaw != "@Invalid()")
         {
@@ -185,7 +203,15 @@ Each of these settings has predefined integer values. **If a change is requested
 
             if (!Directory.Exists(current))
             {
-                var newMountPath = Path.Combine(Path.GetDirectoryName(Path.GetDirectoryName(pathToConfigINI)), current);
+                string? parentDir = Path.GetDirectoryName(pathToConfigINI);
+                string? grandparentDir = parentDir != null ? Path.GetDirectoryName(parentDir) : null;
+                
+                if (grandparentDir == null)
+                {
+                    throw new DirectoryNotFoundException("Cannot determine parent directory for config file");
+                }
+                
+                var newMountPath = Path.Combine(grandparentDir, current);
 
                 if (!Directory.Exists(newMountPath))
                 {
@@ -217,6 +243,80 @@ Each of these settings has predefined integer values. **If a change is requested
             message = message.Replace(entry.Value, entry.Key);
         }
         return message;
+    }
+    
+    /// <summary>
+    /// Processes special characters for display in IC messages.
+    /// Special characters are either hidden or displayed if escaped with a backslash.
+    /// </summary>
+    /// <param name="text">The original text with special characters</param>
+    /// <returns>Processed text with special characters properly handled</returns>
+    public static string ProcessSpecialCharacters(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return text;
+            
+        StringBuilder result = new StringBuilder(text.Length);
+        bool escaped = false;
+        
+        for (int i = 0; i < text.Length; i++)
+        {
+            char c = text[i];
+            
+            // Handle backslash for escaping
+            if (c == '\\' && !escaped)
+            {
+                // Case 1: End of string - append the backslash
+                if (i == text.Length - 1)
+                {
+                    result.Append(c);
+                    continue;
+                }
+                
+                char nextChar = text[i + 1];
+                
+                // Case 2: Check if this is the special \s case
+                if (nextChar == 's')
+                {
+                    // Skip both the backslash and 's' - this is the special \s sequence
+                    i++; // Skip the 's' on the next iteration
+                    continue;
+                }
+                
+                // Case 3: Escaped backslash (\\)
+                if (nextChar == '\\')
+                {
+                    result.Append(c); // Add the first backslash
+                    i++; // Skip the next backslash (it will be processed in the next iteration)
+                    escaped = true;
+                    continue;
+                }
+                
+                // Case 4: Next character is a special character that needs escaping
+                if (SpecialCharacters.TryGetValue(nextChar, out bool isNextSpecial) && isNextSpecial)
+                {
+                    escaped = true;
+                    continue; // Skip the backslash but remember we're in escape mode
+                }
+                
+                // Case 5: Regular backslash followed by a normal character - keep both
+                result.Append(c);
+                continue;
+            }
+            
+            // If the character is special and not escaped, skip it (hide it in output)
+            if (SpecialCharacters.TryGetValue(c, out bool isSpecial) && isSpecial && !escaped)
+            {
+                // Skip this character (hide it)
+                continue;
+            }
+            
+            // Add the character to the result
+            result.Append(c);
+            escaped = false;
+        }
+        
+        return result.ToString();
     }
 
 }
