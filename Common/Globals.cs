@@ -229,15 +229,36 @@ Each of these settings has predefined integer values. **If a change is requested
 
     public static string ReplaceTextForSymbols(string message)
     {
+        // First check if this message contains any encoded placeholders
+        bool containsEncodedPlaceholders = ReplaceInMessages.Keys.Any(placeholder => message.Contains(placeholder));
+        
+        // If the message was created by ReplaceSymbolsForText and contains encoded placeholders
+        if (containsEncodedPlaceholders)
+        {
+            // This is an already encoded message that should remain encoded
+            // To preserve bidirectional conversion, we return the original message
+            return message;
+        }
+        
+        // Standard case - convert all placeholders to symbols
         foreach (var entry in ReplaceInMessages)
         {
             message = message.Replace(entry.Key, entry.Value);
         }
+        
         return message;
     }
 
     public static string ReplaceSymbolsForText(string message)
     {
+        // Check if the message already contains encoded placeholders
+        bool containsEncodedPlaceholders = ReplaceInMessages.Keys.Any(placeholder => message.Contains(placeholder));
+        
+        // If already encoded, don't re-encode
+        if (containsEncodedPlaceholders)
+            return message;
+            
+        // Otherwise, replace symbols with their text equivalents
         foreach (var entry in ReplaceInMessages)
         {
             message = message.Replace(entry.Value, entry.Key);

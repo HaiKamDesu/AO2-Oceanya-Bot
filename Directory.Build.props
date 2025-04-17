@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <!-- Define reusable constants -->
+    <DefineConstants Condition="'$(TargetFramework)' == 'net8.0-windows'">$(DefineConstants);WINDOWS</DefineConstants>
+    <DefineConstants Condition="'$(TargetFramework)' == 'net8.0'">$(DefineConstants);CROSSPLATFORM</DefineConstants>
+  </PropertyGroup>
+</Project>

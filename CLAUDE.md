@@ -6,7 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **AOBot-Testing/**: My implementation of an Attorney Online bot client
 - **Common/**: Shared utilities and code for my implementation
 - **OceanyaClient/**: My main WPF client implementation
-- **UnitTests/**: Tests for my implementation
+- **UnitTests/**: Tests for my implementation (Windows-only)
+- **CrossPlatformTests/**: Cross-platform tests that can run in Linux environments
 
 ## Reference Code Usage
 The code in the AO2-Client submodule is from the original Attorney Online project and is checked out at tag `v2.11.0-release`. It should be used for:
@@ -38,9 +39,13 @@ Claude should NOT copy this code directly but use it to understand patterns and 
 - **Using MSBuild**: `msbuild "AOBot-Testing/AOBot-Testing.sln" /p:Configuration=Release`
 
 ## Environment Limitations
-- **Linux/WSL Environment**: Building and running the main application in a Linux or WSL environment is not supported as the project uses WPF, which requires Windows
+- **Linux/WSL Environment**: 
+  - Building and running the main application in a Linux or WSL environment is not supported as the project uses WPF, which requires Windows
+  - Cross-platform tests can be run in Linux/WSL using the `CrossPlatformTests` project
 - **Docker**: Building in a Docker container requires a Windows-based container with .NET SDK 8.0 installed
-- **CI/CD**: Use Windows runners for build pipelines
+- **CI/CD**: 
+  - Use Windows runners for full build pipelines
+  - Linux runners can be used for cross-platform tests
 
 ## Claude Code Guidelines
 - **Building and Running .NET 8.0-windows Applications**: Claude Code cannot build, run, or directly test .NET 8.0-windows applications as it operates in a Linux environment without .NET SDK
@@ -70,9 +75,13 @@ The unit tests in this project have several failing tests:
    - Many tests are skipped because they require real credentials
 
 4. **Running Tests**:
-   - Tests can only be run in a Windows environment
+   - Main unit tests (`UnitTests` project) can only be run in a Windows environment
    - Use `dotnet test` or Visual Studio Test Explorer to run tests
    - When working on tests, focus on fixing the JSON formatting issues first
+   - Cross-platform tests (`CrossPlatformTests` project) can be run in Linux environments:
+     ```
+     ./run-cross-platform-tests.sh
+     ```
 
 ## Code Style Guidelines
 - **Naming**: Use PascalCase for classes, methods, and properties. Use camelCase for local variables and parameters.
@@ -136,3 +145,45 @@ dotnet test UnitTests/GlobalsTests.cs
 ```
 
 The test implementation in `GlobalsTests.cs` covers all aspects of special character handling with comprehensive test cases.
+
+## Cross-Platform Testing
+
+To facilitate testing in non-Windows environments (including Claude Code), the project includes a dedicated cross-platform test project:
+
+### CrossPlatformTests Project
+
+- **Purpose**: Enables running tests in any environment with .NET 8.0 SDK (Windows, Linux, macOS)
+- **Target Framework**: `net8.0` (not Windows-specific)
+- **Location**: `/CrossPlatformTests` directory
+- **Solution**: `CrossPlatformTests.sln`
+
+### Components
+
+- **CrossPlatformTests.csproj**: The test project targeting .NET 8.0 (not Windows-specific)
+- **Globals.cs**: Cross-platform implementation of Globals functionality
+- **CustomConsole.cs**: Cross-platform implementation of logging utilities
+- **GlobalsTests.cs**: Tests for string manipulation and text processing functions
+
+### Running Cross-Platform Tests
+
+Tests can be run in any environment with .NET 8.0 SDK installed:
+
+```bash
+# In Linux/WSL
+./run-cross-platform-tests.sh
+
+# In any environment with .NET SDK
+dotnet test CrossPlatformTests/CrossPlatformTests.csproj
+```
+
+### Benefits for Claude Code
+
+- Claude Code can now validate and test core functionality
+- Changes to string processing methods can be verified without a Windows environment
+- Provides a basis for adding more cross-platform testable functionality
+
+### Limitations
+
+- Only tests non-UI functionality
+- Does not test WPF components or Windows-specific features
+- Limited to functionality that doesn't depend on Windows API
